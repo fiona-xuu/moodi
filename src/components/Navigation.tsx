@@ -1,8 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import GradientButton from "@/components/GradientButton";
 
 const Navigation = () => {
   const location = useLocation();
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setHasScrolled(true);
+      } else {
+        setHasScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   const scrollToAbout = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -12,17 +27,45 @@ const Navigation = () => {
     }
   };
 
+  const scrollToHome = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const homeSection = document.getElementById('home');
+    if (homeSection) {
+      homeSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-6">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="text-foreground text-lg font-medium hover:opacity-80 transition-opacity">
-          icon
-        </Link>
-        
-        <div className="flex gap-8 items-center">
-          <Link to="/" className="text-foreground hover:opacity-80 transition-opacity">
-            home
+    <nav 
+      className={`fixed top-0 left-0 right-0 z-50 px-12 py-6 transition-colors duration-300 ${
+        hasScrolled ? 'bg-[#3E3464]' : 'bg-transparent'
+      }`}
+    >
+      <div className="relative mx-auto flex items-center text-xl">
+        {/* Left section */}
+        <div className="flex-1 flex justify-start">
+          <Link to="/" className="text-foreground font-medium hover:opacity-80 transition-opacity">
+            icon
           </Link>
+        </div>
+        
+        {/* Center section - absolutely positioned */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-8 items-center">
+          {location.pathname === '/' ? (
+            <a 
+              href="#home" 
+              onClick={scrollToHome}
+              className="text-foreground hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              home
+            </a>
+          ) : (
+            <Link to="/" className="text-foreground hover:opacity-80 transition-opacity">
+              home
+            </Link>
+          )}
           {location.pathname === '/' ? (
             <a 
               href="#about" 
@@ -38,14 +81,12 @@ const Navigation = () => {
           )}
         </div>
         
-        <Link to="/login">
-          <Button 
-            variant="ghost" 
-            className="glass-button hover:bg-primary/20 transition-all duration-300 hover:scale-105 cursor-pointer"
-          >
-            login
-          </Button>
-        </Link>
+        {/* Right section */}
+        <div className="flex-1 flex justify-end">
+          <GradientButton to="/login">
+            log in
+          </GradientButton>
+        </div>
       </div>
     </nav>
   );
