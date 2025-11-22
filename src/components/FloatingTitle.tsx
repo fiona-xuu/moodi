@@ -1,6 +1,6 @@
 const FloatingTitle = () => {
   return (
-    <div className="relative flex items-center justify-center text-white" style={{ fontFamily: 'Mansalva, cursive', letterSpacing: '-0.15em' }}>
+    <div className="relative flex items-center justify-center text-white header">
       {/* m */}
       <span
         className="inline-block float-letter"

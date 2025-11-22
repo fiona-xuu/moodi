@@ -49,6 +49,8 @@ All colors MUST be HSL.
     
     /* Primary accent color */
     --primary-accent: 229 32% 33%;
+    
+    --primary-text: 49 85% 92%;
 
     --sidebar-background: 0 0% 98%;
 
@@ -106,5 +108,14 @@ All colors MUST be HSL.
     background: hsla(var(--glass-bg));
     backdrop-filter: blur(12px);
     border: 1px solid hsla(var(--glass-border));
+  }
+  
+  .header {
+    font-family: 'Mansalva', cursive;
+    letter-spacing: -0.15em;
+  }
+
+  .inder-text {
+    font-family: 'Inder', sans-serif;
   }
 }

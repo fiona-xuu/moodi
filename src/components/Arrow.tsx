@@ -30,7 +30,7 @@ const Arrow = ({ className = "", rectangleColor = "currentColor", username }: Ar
       
       {/* Username on left, vertically centered */}
       {username && (
-        <h1 className="absolute left-0 top-1/2 -translate-y-1/2 text-5xl font-bold text-foreground whitespace-nowrap z-10 pl-10">
+        <h1 className="absolute left-0 top-1/2 -translate-y-1/2 text-foreground whitespace-nowrap z-10 pl-14">
           {username}
         </h1>
       )}

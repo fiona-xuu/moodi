@@ -1,16 +1,66 @@
 import { Link } from "react-router-dom";
-import { UserPlus, Menu, Settings, Heart, Leaf, Sparkles, Smile, Moon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
 import Arrow from "@/components/Arrow";
+import EnergyIcon from "@/components/icons/EnergyIcon";
+import HungerIcon from "@/components/icons/HungerIcon";
+import StressIcon from "@/components/icons/StressIcon";
+import PhysicalIcon from "@/components/icons/PhysicalIcon";
+import TaskIcon from "@/components/icons/TaskIcon";
+import ChatIcon from "@/components/icons/ChatIcon";
+import SettingsIcon from "@/components/icons/SettingsIcon";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { authStorage, authAPI } from "@/lib/api";
 
 const Dashboard = () => {
+  const [username, setUsername] = useState<string>("guest");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        // First check if user is stored locally
+        const storedUser = authStorage.getUser();
+        if (storedUser?.username) {
+          setUsername(storedUser.username);
+          return;
+        }
+
+        // If not stored, try to get profile from API
+        const user = await authAPI.getProfile();
+        if (user?.username) {
+          setUsername(user.username);
+          authStorage.setUser(user);
+        }
+      } catch (error) {
+        // User is not logged in or error occurred
+        setUsername("guest");
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  const getColorClass = (value: number, max: number): string => {
+    const percentage = (value / max) * 100;
+    if (percentage >= 80) {
+      return "bg-green-400";
+    } else if (percentage >= 50) {
+      return "bg-yellow-400";
+    } else if (percentage >= 20) {
+      return "bg-orange-400";
+    } else {
+      return "bg-red-400";
+    }
+  };
+
   const stats = [
-    { icon: Heart, value: 47, max: 100, color: "bg-orange-400" },
-    { icon: Leaf, value: 100, max: 100, color: "bg-green-400" },
-    { icon: Sparkles, value: 10, max: 100, color: "bg-red-400" },
-    { icon: Smile, value: 47, max: 100, color: "bg-orange-400" },
-    { icon: Moon, value: 47, max: 100, color: "bg-orange-400" },
+    { icon: Heart, value: 47, max: 100, description: "Emotional well-being and mood" },
+    { icon: HungerIcon, value: 100, max: 100, description: "Hunger level and appetite" },
+    { icon: EnergyIcon, value: 10, max: 100, description: "Energy level and vitality" },
+    { icon: StressIcon, value: 60, max: 100, description: "Stress level and tension" },
+    { icon: PhysicalIcon, value: 80, max: 100, description: "Physical health and fitness" },
   ];
 
   return (
@@ -26,20 +76,19 @@ const Dashboard = () => {
         {/* Top Bar */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <Arrow className="-ml-8 text-primary-accent" username="username's vitals" />
+            <Arrow className="-ml-8 text-primary-accent inder-text font-weight-bold text-5xl" username={`${username}'s vitals`} />
           </div>
           
           <div className="flex gap-3 items-center">
-            <span className="font-display text-2xl font-bold text-accent">moodi</span>
-            <button className="w-12 h-12 rounded-full bg-foreground/90 flex items-center justify-center hover:bg-foreground transition-colors">
-              <UserPlus className="w-5 h-5 text-background" />
+            <button className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300">
+              <TaskIcon className="w-7 h-7 text-primary-text" />
             </button>
-            <button className="w-12 h-12 rounded-full bg-foreground/90 flex items-center justify-center hover:bg-foreground transition-colors">
-              <Menu className="w-5 h-5 text-background" />
+            <button className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300">
+              <ChatIcon className="w-9 h-9 text-primary-text" />
             </button>
             <Link to="/settings">
-              <button className="w-12 h-12 rounded-full bg-foreground/90 flex items-center justify-center hover:bg-foreground transition-colors">
-                <Settings className="w-5 h-5 text-background" />
+              <button className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300">
+                <SettingsIcon className="w-9 h-9 text-primary-text" />
               </button>
             </Link>
           </div>
@@ -49,28 +98,36 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Stats */}
           <div>
-            <h2 className="text-4xl font-bold text-foreground mb-6">STATS</h2>
+            <h2 className="text-4xl font-medium text-foreground inder-text ml-4 mb-6">statistics</h2>
             
             {/* Stats Bars */}
             <div className="space-y-4 mb-8">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
+                const colorClass = getColorClass(stat.value, stat.max);
                 return (
                   <div key={index} className="relative">
-                    <div className="flex items-center gap-3 bg-foreground/10 backdrop-blur-sm rounded-full p-2 pr-6">
-                      <div className={`w-10 h-10 rounded-full ${stat.color} flex items-center justify-center flex-shrink-0`}>
-                        <Icon className="w-5 h-5 text-background" />
-                      </div>
+                    <div className="flex items-center gap-3 bg-foreground/10 backdrop-blur-sm rounded-full p-2 pr-5">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 cursor-help`}>
+                            <Icon className="w-5 h-5 text-white" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{stat.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
                       <div className="flex-1 relative">
                         <div className="h-8 bg-foreground/20 rounded-full overflow-hidden">
                           <div 
-                            className={`h-full ${stat.color} transition-all duration-500`}
+                            className={`h-full ${colorClass} transition-all duration-500`}
                             style={{ width: `${(stat.value / stat.max) * 100}%` }}
                           />
                         </div>
                       </div>
-                      <span className="text-foreground font-semibold ml-3 min-w-[80px] text-right">
-                        {stat.value}/{stat.max}
+                      <span className="text-lg font-medium ml-2 min-w-[50px] text-right inder-text">
+                        {Math.round((stat.value / stat.max) * 100)}%
                       </span>
                     </div>
                   </div>
