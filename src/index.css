@@ -46,6 +46,9 @@ All colors MUST be HSL.
     /* Glass effect */
     --glass-bg: 250 30% 18% / 0.3;
     --glass-border: 0 0% 100% / 0.2;
+    
+    /* Primary accent color */
+    --primary-accent: 229 32% 33%;
 
     --sidebar-background: 0 0% 98%;
 

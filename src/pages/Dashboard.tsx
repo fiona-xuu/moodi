@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { UserPlus, Menu, Settings, Heart, Leaf, Sparkles, Smile, Moon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import heroBackground from "@/assets/hero-background.png";
+import dashboardBackground from "@/assets/dashboard-background.png";
+import Arrow from "@/components/Arrow";
 
 const Dashboard = () => {
   const stats = [
@@ -17,18 +18,15 @@ const Dashboard = () => {
       {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroBackground})` }}
+        style={{ backgroundImage: `url(${dashboardBackground})` }}
       />
       
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-background/10 backdrop-blur-sm" />
-      
       {/* Content */}
-      <div className="relative min-h-screen p-6">
+      <div className="relative min-h-screen p-8">
         {/* Top Bar */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-5xl font-bold text-foreground mb-8">USERNAME</h1>
+            <Arrow className="-ml-8 text-primary-accent" username="username's vitals" />
           </div>
           
           <div className="flex gap-3 items-center">

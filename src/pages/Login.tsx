@@ -4,16 +4,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
+import { authAPI, authStorage } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempted with:", { email, password });
+    setIsLoading(true);
+
+    try {
+      const response = await authAPI.login(email, password);
+      
+      // Store token and user data
+      if (response.token) {
+        authStorage.setToken(response.token);
+      }
+      authStorage.setUser(response.user);
+
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully logged in.",
+      });
+
+      // Redirect to dashboard
+      navigate("/dashboard");
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Invalid email or password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -62,8 +91,9 @@ const Login = () => {
             <Button 
               type="submit" 
               className="w-full bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105 cursor-pointer"
+              disabled={isLoading}
             >
-              Login
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
           
