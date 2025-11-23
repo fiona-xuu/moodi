@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import GradientButton from "@/components/GradientButton";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import mascot from "@/assets/mascot.png";
+import mascot from "@/assets/mascots/mascot.png";
 
 const Navigation = () => {
   const location = useLocation();
@@ -21,14 +21,6 @@ const Navigation = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  const scrollToAbout = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const aboutSection = document.getElementById('about');
-    if (aboutSection) {
-      aboutSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   const scrollToHome = (e: React.MouseEvent) => {
     e.preventDefault();
     const homeSection = document.getElementById('home');
@@ -75,19 +67,6 @@ const Navigation = () => {
           ) : (
             <Link to="/" className="text-foreground hover:opacity-80 transition-opacity">
               home
-            </Link>
-          )}
-          {location.pathname === '/' ? (
-            <a 
-              href="#about" 
-              onClick={scrollToAbout}
-              className="text-foreground hover:opacity-80 transition-opacity cursor-pointer"
-            >
-              about us
-            </a>
-          ) : (
-            <Link to="/#about" className="text-foreground hover:opacity-80 transition-opacity">
-              about us
             </Link>
           )}
         </div>

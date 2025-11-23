@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
-import mascot from "@/assets/mascot.png";
+import mascot from "@/assets/mascots/mascot.png";
 import overall from "@/assets/overall1.png";
 import hungry from "@/assets/hungry1.png";
 import sleepy from "@/assets/sleepy1.png";
@@ -18,6 +18,9 @@ import SettingsIcon from "@/components/icons/SettingsIcon";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SettingsModal from "@/components/SettingsModal";
 import ChatModal from "@/components/ChatModal";
+import ScanModal from "@/components/ScanModal";
+import TaskModal, { Task } from "@/components/TaskModal";
+import DailyCheckInModal from "@/components/DailyCheckInModal";
 import PlayButton from "@/components/PlayButton";
 import RefreshIcon from "@/components/icons/RefreshIcon";
 import { authStorage, authAPI } from "@/lib/api";
@@ -34,8 +37,12 @@ const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
+  const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
+  const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false);
+  const [dailyCheckInOpen, setDailyCheckInOpen] = useState<boolean>(false);
+  const [newTasks, setNewTasks] = useState<Task[]>([]);
   const initialStats = [
-    { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },  // average of other stats
+    { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
     { icon: StressIcon, value: 50, max: 100, description: "Stress level and tension. Lower is better." },
@@ -57,6 +64,38 @@ const Dashboard = () => {
   });
   const [stats, setStats] = useState<Stat[]>(initialStats);
 
+  const fetchStats = async () => {
+    try {
+        const response = await fetch('http://localhost:3000/api/stats');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        
+        // Store raw stats for mascot selection
+        setRawStats({
+            overall_health: data.overall_health,
+            hunger: data.hunger,
+            energy_level: data.energy_level,
+            stress_level: data.stress_level,
+            sleep_quality: data.sleep_quality,
+        });
+        
+        // Map backend data to frontend stats structure
+        const newStats: Stat[] = [
+            { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
+            { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
+            { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
+            { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
+            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+        ];
+        setStats(newStats);
+
+    } catch (error) {
+        console.error("Failed to fetch stats:", error);
+    }
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -77,38 +116,6 @@ const Dashboard = () => {
         // User is not logged in or error occurred
         setUsername("guest");
       }
-    };
-
-    const fetchStats = async () => {
-        try {
-            const response = await fetch('http://localhost:3000/api/stats');
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const data = await response.json();
-            
-            // Store raw stats for mascot selection
-            setRawStats({
-                overall_health: data.overall_health,
-                hunger: data.hunger,
-                energy_level: data.energy_level,
-                stress_level: data.stress_level,
-                sleep_quality: data.sleep_quality,
-            });
-            
-                // Map backend data to frontend stats structure
-                const newStats: Stat[] = [
-                    { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
-                    { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
-                    { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
-                    { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-                    { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
-                ];
-            setStats(newStats);
-
-        } catch (error) {
-            console.error("Failed to fetch stats:", error);
-        }
     };
 
     loadUser();
@@ -192,6 +199,7 @@ const Dashboard = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background Image */}
@@ -210,7 +218,10 @@ const Dashboard = () => {
           
           <div className="flex flex-col gap-3 items-end">
             <div className="flex gap-3 items-center">
-              <button className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
+              <button 
+                onClick={() => setTaskModalOpen(true)}
+                className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
+              >
                 <TaskIcon className="w-7 h-7 text-foreground" />
               </button>
               <button 
@@ -227,7 +238,10 @@ const Dashboard = () => {
               </button>
             </div>
             <div className="flex gap-3 items-center">
-              <button className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-3 rounded-full shadow-lg hover:scale-105 transition-all duration-300">
+              <button 
+                onClick={() => setScanModalOpen(true)}
+                className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-3 rounded-full shadow-lg hover:scale-105 transition-all duration-300"
+              >
                 <PlayButton className="text-white" width={32} height={32} />
                 <span className="inder-text text-lg font-medium">scan</span>
               </button>
@@ -245,7 +259,30 @@ const Dashboard = () => {
         <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
         
         {/* Chat Modal */}
-        <ChatModal open={chatOpen} onOpenChange={setChatOpen} />
+        <ChatModal open={chatOpen} onOpenChange={setChatOpen} onStatsUpdate={fetchStats} />
+
+        {/* Task Modal */}
+        <TaskModal 
+          open={taskModalOpen} 
+          onOpenChange={setTaskModalOpen}
+          username={username}
+          onTasksUpdate={(tasks) => {
+            setNewTasks(tasks);
+            setDailyCheckInOpen(true);
+          }}
+        />
+
+            {/* Scan Instructions Modal */}
+            <ScanModal open={scanModalOpen} onOpenChange={setScanModalOpen} />
+
+        {/* Daily Check In Modal */}
+        <DailyCheckInModal 
+          open={dailyCheckInOpen} 
+          onOpenChange={setDailyCheckInOpen} 
+          tasks={newTasks}
+          username={username}
+          onTasksUpdate={setNewTasks}
+        />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 -mt-1">

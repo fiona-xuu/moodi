@@ -7,6 +7,7 @@ import { authAPI, authStorage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import loginSignupBackground from "@/assets/login-signup-background.png";
 import GradientButton from "@/components/GradientButton";
+import Stars from "@/components/Stars";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -54,6 +55,9 @@ const Signup = () => {
         style={{ backgroundImage: `url(${loginSignupBackground})` }}
       />
       
+      {/* Stars */}
+      <Stars duration={2}/>
+      
       <div className="w-full max-w-md relative z-10">
         <Link to="/" className="inline-flex items-center gap-2 text-foreground/80 hover:text-foreground mb-8 transition-colors text-lg">
           <ArrowLeft className="w-5 h-5" />
@@ -67,7 +71,8 @@ const Signup = () => {
           >
             Join moodi
           </h1>
-          <p className="text-muted-foreground mb-8 text-lg">
+          <div className="h-px my-4 bg-white/40 w-full"></div>
+          <p className="text-muted-foreground mb-6 text-lg">
             Start your mindful journey today
           </p>
           

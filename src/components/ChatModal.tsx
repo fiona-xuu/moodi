@@ -1,3 +1,4 @@
+import { sendChatMessage } from "@/lib/api";
 import { useState, useEffect } from "react";
 import {
   Sheet,
@@ -6,7 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import mascot from "@/assets/mascot.png";
+import mascot from "@/assets/mascots/mascot.png";
 import chatbotBackground from "@/assets/chatbot-background.png";
 import TextBubble from "@/components/TextBubble";
 import ChatIcon from "@/components/icons/ChatIcon";
@@ -15,16 +16,18 @@ import CloseSidebarIcon from "@/components/icons/CloseSidebarIcon";
 interface ChatModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onStatsUpdate: () => void;
 }
 
 interface Message {
   text: string;
-  sender: 'user' | 'lumi';
+  sender: 'user' | 'moodi';
 }
 
-const ChatModal = ({ open, onOpenChange }: ChatModalProps) => {
+const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const hasMessages = messages.length > 0;
 
   // Reset messages when modal closes
@@ -35,22 +38,40 @@ const ChatModal = ({ open, onOpenChange }: ChatModalProps) => {
     }
   }, [open]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
 
     const messageText = inputValue.trim();
-    
+
     // Add user message
     const userMessage: Message = { text: messageText, sender: 'user' };
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputValue("");
+    setIsLoading(true);
 
-    // Simulate Lumi response (you can replace this with actual API call later)
-    setTimeout(() => {
-      const lumiMessage: Message = { text: messageText, sender: 'lumi' };
-      setMessages(prev => [...prev, lumiMessage]);
-    }, 500);
+    try {
+      const history = newMessages.slice(0, -1).map(msg => ({
+        role: msg.sender === 'user' ? 'user' : ('model' as 'user' | 'model'),
+        parts: [{ text: msg.text }]
+      }));
+
+      const response = await sendChatMessage(messageText, history);
+
+      if (response.reply) {
+        const moodiMessage: Message = { text: response.reply, sender: 'moodi' };
+        setMessages(prev => [...prev, moodiMessage]);
+        onStatsUpdate(); // Fetch the latest stats
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      // Optionally, add an error message to the chat
+      const errorMessage: Message = { text: "Sorry, I'm having trouble connecting. Please try again later.", sender: 'moodi' };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -124,17 +145,17 @@ const ChatModal = ({ open, onOpenChange }: ChatModalProps) => {
           <div className="flex-1 flex flex-col px-6 pb-24 relative overflow-y-auto">
             {hasMessages ? (
               /* Chat Messages */
-              <div className="flex flex-col gap-0 mt-4">
+              <div className="flex flex-col gap-3 mt-4">
                 {messages.map((message, index) => (
                   <div
                     key={index}
                     className={`flex items-start gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                   >
                     {/* Mascot/Emoji Icon */}
-                    {message.sender === 'lumi' ? (
+                    {message.sender === 'moodi' ? (
                       <img 
                         src={mascot} 
-                        alt="Lumi" 
+                        alt="Moodi" 
                         className="w-10 h-10 flex-shrink-0"
                       />
                     ) : (
@@ -164,11 +185,11 @@ const ChatModal = ({ open, onOpenChange }: ChatModalProps) => {
                   <TextBubble className="text-primary-accent text-xl">how can I help?</TextBubble>
                 </div>
 
-                {/* Lumi character */}
+                {/* Moodi character */}
                 <div className="mt-20">
                   <img 
                     src={mascot} 
-                    alt="Lumi" 
+                    alt="Moodi" 
                     className="h-72 w-auto mx-auto"
                   />
                 </div>

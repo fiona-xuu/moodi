@@ -334,7 +334,7 @@ const tools = [
 app.post('/api/chat', upload.single('image'), async (req, res) => {
   try {
     const message = req.body.message || "";
-    const history = req.body.history ? JSON.parse(req.body.history) : [];
+    const history = (req.body.history && req.body.history !== '[]') ? JSON.parse(req.body.history) : [];
     const imageFile = req.file;
 
     // Initialize model with tools
