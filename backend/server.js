@@ -25,12 +25,17 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 const SYSTEM_PROMPT = `
 You are a supportive and motivating health companion named Moodi. Your goal is to encourage the user to take care of their well-being through small, manageable actions like taking a nap, eating a healthy snack, or doing some light exercise.
 
+Carefully read every message AND inspect every image the user uploads. Interpret what you see:
+- Food, snacks, or beverages that would satisfy hunger → call update_user_stat with stat_name "hunger" and a positive change_amount between 10 and 25 (bigger meals = larger boost). This represents becoming more full / less hungry.
+- Beds, pillows, couches set up for rest, people sleeping, or anything clearly showing rest/nap prep → call update_user_stat with stat_name "energy_level" and a positive change_amount between 10 and 25.
+- Only make one update per distinct action. If unsure, ask for clarification instead of guessing.
+
 When the user talks to you, listen to their state and suggest appropriate health-improving activities.
 - If they seem tired, suggest a power nap or rest.
 - If they seem low on energy or hungry, suggest a nutritious snack.
 - If they seem stressed or sluggish, suggest a walk, stretching, or a quick workout.
 
-When you use a tool to update a user's stat (like hunger or sleep), your final response should first confirm the action in a friendly way. For example: "That sounds delicious! I've updated your hunger stat." or "That's great to hear. I've updated your sleep quality."
+Whenever you call a tool, your final response MUST: (1) confirm the stat update in a friendly way ("Yum! I've bumped up your hunger bar."), and (2) provide one supportive suggestion or observation based on the situation.
 
 Always be kind, encouraging, and non-judgmental. Keep your responses concise and friendly.
 `;
@@ -39,33 +44,74 @@ Always be kind, encouraging, and non-judgmental. Keep your responses concise and
 let connectedClients = new Set();
 let lastScanTime = 0;
 
+const METRIC_CONFIG = {
+    pulse: { label: 'Average Pulse', units: 'BPM', fallback: 72, decimals: 1 },
+    breathing: { label: 'Average Breathing', units: 'RPM', fallback: 14, decimals: 1 },
+    ie_ratio: { label: 'Inhale/Exhale Ratio', units: 'ratio', fallback: 1.0, decimals: 2 },
+    breath_amp: { label: 'Breath Amplitude', units: 'AU', fallback: 0.5, decimals: 2 },
+    blood_pressure: { label: 'Blood Pressure (Phasic)', units: 'mmHg', fallback: 118, decimals: 1 },
+    apnea: { label: 'Apnea Status', units: '(0=None, 1=Detected)', fallback: 0, decimals: 2 },
+};
+
 wss.on('connection', (ws) => {
-    console.log('Client connected to WebSocket on port 8080');
+    console.log('[DEBUG] ========== NEW WEBSOCKET CLIENT CONNECTED ==========');
+    console.log('[DEBUG] Total connected clients:', connectedClients.size + 1);
     connectedClients.add(ws);
 
     ws.on('message', async (message) => {
         try {
-            const data = JSON.parse(message);
+            const rawMessage = message.toString();
+            console.log('[DEBUG] Raw WebSocket message received (length:', rawMessage.length, 'bytes)');
+            
+            const data = JSON.parse(rawMessage);
+            console.log('[DEBUG] Parsed message type:', data.type);
             
             if (data.type === 'scan') {
+                console.log('[DEBUG] ========== SCAN MESSAGE DETECTED ==========');
+                console.log('[DEBUG] Raw scan payload:', JSON.stringify(data.data, null, 2));
+                console.log('[DEBUG] Scan data keys:', Object.keys(data.data || {}));
+                console.log('[DEBUG] Scan data summary:', {
+                    pulse: data.data?.pulse?.length || 0,
+                    breathing: data.data?.breathing?.length || 0,
+                    ie_ratio: data.data?.ie_ratio?.length || 0,
+                    breath_amp: data.data?.breath_amp?.length || 0,
+                    blood_pressure: data.data?.blood_pressure?.length || 0,
+                    apnea: data.data?.apnea?.length || 0
+                });
+                
                 const now = Date.now();
-                if (now - lastScanTime < 3000) {
-                    console.log('Scan data received too soon. Ignoring.');
-                    return;
+                const timeSinceLastScan = now - lastScanTime;
+                const shouldRunAnalysis = timeSinceLastScan >= 3000;
+                if (!shouldRunAnalysis) {
+                    console.log(`[DEBUG] Scan received ${timeSinceLastScan}ms after previous one. Will skip AI analysis but still store raw data.`);
+                } else {
+                    lastScanTime = now;
                 }
-                lastScanTime = now;
 
-                console.log('Received scan data. Saving and Running AI Analysis...');
+                console.log('[DEBUG] Processing scan - saving to database...');
                 
                 // Save scan to DB
-                db.run("INSERT INTO scans (data) VALUES (?)", [JSON.stringify(data.data)], (err) => {
-                    if (err) console.error("Error saving scan:", err);
+                const scanDataJson = JSON.stringify(data.data);
+                db.run("INSERT INTO scans (data) VALUES (?)", [scanDataJson], (err) => {
+                    if (err) {
+                        console.error('[DEBUG] Error saving scan to database:', err);
+                    } else {
+                        console.log('[DEBUG] ✓ Scan saved to database successfully');
+                    }
                 });
 
-                // Expect data.data to contain { pulse: [], breathing: [], ... }
-                await runAIAnalysis(data.data);
+                if (shouldRunAnalysis) {
+                    console.log('[DEBUG] Running AI analysis on scan data...');
+                    // Expect data.data to contain { pulse: [], breathing: [], ... }
+                    await runAIAnalysis(data.data);
+                    console.log('[DEBUG] ========== SCAN PROCESSING COMPLETE ==========');
+                } else {
+                    console.log('[DEBUG] Skipping AI analysis for this scan to avoid rapid reprocessing.');
+                }
             } else if (data.type === 'debug') {
-                console.log(`DEBUG FROM APP: ${data.unit}`);
+                console.log(`[DEBUG] DEBUG FROM APP: ${data.unit}`);
+            } else {
+                console.log('[DEBUG] Unknown message type:', data.type);
             }
 
             // Broadcast to other clients (like the web dashboard)
@@ -76,37 +122,50 @@ wss.on('connection', (ws) => {
             });
 
         } catch (e) {
-            console.error('Error parsing message:', e);
+            console.error('[DEBUG] Error parsing WebSocket message:', e);
+            console.error('[DEBUG] Raw message (first 200 chars):', message.toString().substring(0, 200));
         }
     });
 
     ws.on('close', () => {
-        console.log('Client disconnected');
+        console.log('[DEBUG] ========== WEBSOCKET CLIENT DISCONNECTED ==========');
         connectedClients.delete(ws);
+        console.log('[DEBUG] Remaining connected clients:', connectedClients.size);
     });
 });
 
 async function runAIAnalysis(metrics) {
     const avg = (arr) => (arr && arr.length) ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-    
-    const pulseAvg = avg(metrics.pulse);
-    const breathAvg = avg(metrics.breathing);
-    const ieAvg = avg(metrics.ie_ratio);
-    const ampAvg = avg(metrics.breath_amp);
-    const bpAvg = avg(metrics.blood_pressure);
-    const apneaAvg = avg(metrics.apnea);
+
+    const metricEntries = Object.entries(METRIC_CONFIG).map(([key, config]) => {
+        const samples = Array.isArray(metrics[key]) ? metrics[key] : [];
+        const hasData = samples.length > 0;
+        const value = hasData ? avg(samples) : config.fallback;
+        return { key, ...config, hasData, value };
+    });
+
+    const measuredMetrics = metricEntries.filter((entry) => entry.hasData);
+    const metricLines = metricEntries.map((entry) => {
+        const prefix = entry.hasData ? '[measured]' : '[assumed-normal]';
+        const suffix = entry.hasData ? '' : ' — no readings received, treat as healthy baseline.';
+        return `${prefix} ${entry.label}: ${entry.value.toFixed(entry.decimals)} ${entry.units}${suffix}`;
+    }).join('\n');
+
+    const guidance = measuredMetrics.length
+        ? `Focus your reasoning on the metrics marked "[measured]" (${measuredMetrics.map(m => m.label).join(', ')}).`
+        : `No metrics were actually measured in this scan. Provide calm, default encouragement while keeping all stats neutral.`;
 
     const prompt = `
-    Analyze these physiological metrics collected from a health scan:
-    Average Pulse: ${pulseAvg.toFixed(1)} BPM
-    Average Breathing: ${breathAvg.toFixed(1)} RPM
-    Average Inhale/Exhale Ratio: ${ieAvg.toFixed(2)}
-    Average Breath Amplitude: ${ampAvg.toFixed(2)} AU
-    Average Blood Pressure (Phasic): ${bpAvg.toFixed(1)} mmHg
-    Apnea Status (0=None, 1=Detected): ${apneaAvg.toFixed(2)}
+    Analyze these physiological metrics collected from a health scan.
+
+    ${metricLines}
+
+    ${guidance}
+    Metrics labeled "[assumed-normal]" had no samples this time; interpret them as neutral/healthy and do not reduce scores because of them.
+    IMPORTANT: "stress_level.score" represents calmness. A value of 100 means the person is completely relaxed / low stress, and 0 means extremely stressed. Output higher stress scores when the user appears calm.
     
-    Based on these metrics, estimate the following states on a scale of 1-100 and provide a 1-sentence justification for each.
-    If the heart rate (Pulse) is high (e.g., > 100 BPM) or stress seems high, suggest a "quest" to help them relax (e.g., "Meditate for 5 mins", "Take 3 deep breaths"). If they seem low energy, suggest a quest like "Do 10 jumping jacks".
+    Based on the measured data, estimate the following states on a scale of 1-100 and provide a one-sentence justification for each.
+    If the heart rate (Pulse) is high (e.g., > 100 BPM) or stress_level score drops low (meaning high stress), suggest a "quest" to help them relax (e.g., "Meditate for 5 mins", "Take 3 deep breaths"). If they seem low energy, suggest a quest like "Do 10 jumping jacks".
     
     Return ONLY valid JSON in the following format (no markdown formatting):
     {
@@ -185,9 +244,7 @@ async function recomputeOverallHealth() {
       }
       if (row) {
         const { hunger, stress_level, energy_level, sleep_quality } = row;
-        // Invert stress_level for the average calculation
-        const invertedStress = 100 - stress_level;
-        const overallHealth = Math.round((hunger + invertedStress + energy_level + sleep_quality) / 4);
+        const overallHealth = Math.round((hunger + stress_level + energy_level + sleep_quality) / 4);
         
         db.run("UPDATE stats SET overall_health = ? WHERE id = 1", [overallHealth], (updateErr) => {
           if (updateErr) {
@@ -206,12 +263,139 @@ async function recomputeOverallHealth() {
 
 // --- API Endpoints ---
 
-// Get latest scan data
+// Simple API root for health checks
+app.get('/api', (_req, res) => {
+    res.json({
+        status: 'ok',
+        message: 'Moodi backend API',
+        endpoints: [
+            '/api/stats',
+            '/api/scan/latest',
+            '/api/quests',
+            '/api/stats/recompute',
+            '/api/chat'
+        ]
+    });
+});
+
+// Serve admin dashboard
+app.get('/admin', (req, res) => {
+    res.sendFile(__dirname + '/dashboard.html');
+});
+
+const REQUIRED_SCAN_FIELDS = ['pulse', 'breathing', 'ie_ratio', 'blood_pressure', 'apnea', 'breath_amp'];
+
+const parseScanRow = (row) => {
+    try {
+        return JSON.parse(row.data);
+    } catch (error) {
+        console.error('[DEBUG] Failed to parse scan row', row.id, error);
+        return null;
+    }
+};
+
+const addFieldLengths = (data) => {
+    return REQUIRED_SCAN_FIELDS.reduce((acc, field) => {
+        acc[field] = Array.isArray(data[field]) ? data[field].length : 0;
+        return acc;
+    }, {});
+};
+
+// Get latest scan data (preferring the most recent one that has every required field populated)
 app.get('/api/scan/latest', (req, res) => {
-    db.get("SELECT * FROM scans ORDER BY id DESC LIMIT 1", (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!row) return res.status(404).json({ error: "No scans found" });
-        res.json(JSON.parse(row.data));
+    console.log('[DEBUG] /api/scan/latest endpoint called');
+    db.all("SELECT * FROM scans ORDER BY id DESC LIMIT 50", (err, rows) => {
+        if (err) {
+            console.error('[DEBUG] Database error fetching latest scan:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        if (!rows || rows.length === 0) {
+            console.log('[DEBUG] No scans found in database');
+            return res.status(404).json({ error: "No scans found" });
+        }
+
+        const parseRow = (row) => {
+            try {
+                const parsed = JSON.parse(row.data);
+                return parsed;
+            } catch (parseErr) {
+                console.error('[DEBUG] Error parsing scan data for row', row.id, parseErr);
+                return null;
+            }
+        };
+
+        const hasAllFieldsPopulated = (data) => {
+            return REQUIRED_SCAN_FIELDS.every((field) => Array.isArray(data[field]) && data[field].length > 0);
+        };
+
+        let chosenRow = null;
+        let chosenData = null;
+
+        for (const row of rows) {
+            const data = parseRow(row);
+            if (!data) continue;
+            if (hasAllFieldsPopulated(data)) {
+                chosenRow = row;
+                chosenData = data;
+                console.log('[DEBUG] Found scan with all required fields:', row.id);
+                break;
+            }
+            if (!chosenRow) {
+                // Keep the latest valid (parseable) row as a fallback
+                chosenRow = row;
+                chosenData = data;
+            }
+        }
+
+        if (!chosenRow || !chosenData) {
+            console.log('[DEBUG] No valid scans could be parsed');
+            return res.status(500).json({ error: "Failed to parse scan data" });
+        }
+
+        // Attach metadata so the admin dashboard can display which scan was used
+        const responsePayload = {
+            ...chosenData,
+            metadata: {
+                scan_id: chosenRow.id,
+                created_at: chosenRow.created_at,
+                required_fields_present: hasAllFieldsPopulated(chosenData),
+                fields_lengths: REQUIRED_SCAN_FIELDS.reduce((acc, field) => {
+                    acc[field] = Array.isArray(chosenData[field]) ? chosenData[field].length : 0;
+                    return acc;
+                }, {})
+            }
+        };
+
+        console.log('[DEBUG] Sending scan id', chosenRow.id, 'to client. All fields present:', responsePayload.metadata.required_fields_present);
+        res.json(responsePayload);
+    });
+});
+
+// Get recent scans
+app.get('/api/scans', (req, res) => {
+    const requestedLimit = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+        ? Math.min(Math.max(requestedLimit, 1), 200)
+        : 20;
+
+    db.all("SELECT * FROM scans ORDER BY id DESC LIMIT ?", [limit], (err, rows) => {
+        if (err) {
+            console.error('[DEBUG] Database error fetching scans:', err);
+            return res.status(500).json({ error: err.message });
+        }
+
+        const payload = rows.map((row) => {
+            const data = parseScanRow(row);
+            return {
+                id: row.id,
+                created_at: row.created_at,
+                data,
+                field_lengths: data ? addFieldLengths(data) : {},
+                parse_error: data ? null : 'Failed to parse JSON payload'
+            };
+        });
+
+        res.json(payload);
     });
 });
 

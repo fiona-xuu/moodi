@@ -133,26 +133,70 @@
         }
 
         async function fetchLatestScan() {
+            const scanDataElement = document.getElementById('scan-data');
+            scanDataElement.textContent = "Fetching latest scan...";
+            console.log('[ADMIN DEBUG] fetchLatestScan() called');
+            console.log('[ADMIN DEBUG] API_URL:', API_URL);
+            
             try {
-                const res = await fetch(`${API_URL}/scan/latest`);
+                const url = `${API_URL}/scan/latest`;
+                console.log('[ADMIN DEBUG] Fetching from:', url);
+                const res = await fetch(url);
+                
+                console.log('[ADMIN DEBUG] Response status:', res.status, res.statusText);
+                console.log('[ADMIN DEBUG] Response ok:', res.ok);
+                
+                if (!res.ok) {
+                    let errorData;
+                    try {
+                        errorData = await res.json();
+                        console.log('[ADMIN DEBUG] Error response data:', errorData);
+                    } catch (jsonErr) {
+                        console.error('[ADMIN DEBUG] Failed to parse error JSON:', jsonErr);
+                        errorData = { error: `HTTP ${res.status}: ${res.statusText}` };
+                    }
+                    scanDataElement.textContent = `Error: ${errorData.error || `HTTP ${res.status}: ${res.statusText}`}`;
+                    return;
+                }
+                
+                console.log('[ADMIN DEBUG] Parsing response JSON...');
                 const data = await res.json();
+                console.log('[ADMIN DEBUG] Received data:', data);
+                console.log('[ADMIN DEBUG] Data type:', typeof data);
+                console.log('[ADMIN DEBUG] Data keys:', Object.keys(data));
+
+                // Check if data is an error object
+                if (data.error) {
+                    console.log('[ADMIN DEBUG] Data contains error:', data.error);
+                    scanDataElement.textContent = `Error: ${data.error}`;
+                    return;
+                }
 
                 // Helper to calculate average
                 const avg = (arr) => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2) : 'N/A';
 
-                let summary = "";
+                let summary = "=== Scan Summary ===\n\n";
+                let hasData = false;
                 for (const key in data) {
                     if (Array.isArray(data[key])) {
                         summary += `Avg ${key.replace('_', ' ')}: ${avg(data[key])}\n`;
+                        hasData = true;
                     }
+                }
+                
+                if (!hasData) {
+                    summary += "No array data found in scan.\n";
                 }
                 
                 summary += "\n--- Raw Data ---\n";
                 summary += JSON.stringify(data, null, 2);
 
-                document.getElementById('scan-data').textContent = summary;
+                console.log('[ADMIN DEBUG] Setting scan data element content');
+                scanDataElement.textContent = summary;
+                console.log('[ADMIN DEBUG] fetchLatestScan() completed successfully');
             } catch (e) {
-                document.getElementById('scan-data').textContent = "No scan found or error fetching.";
+                console.error('[ADMIN DEBUG] Exception in fetchLatestScan:', e);
+                scanDataElement.textContent = `Error fetching scan: ${e.message}\n\nMake sure the backend server is running on http://localhost:3000\n\nFull error: ${e}`;
             }
         }
 

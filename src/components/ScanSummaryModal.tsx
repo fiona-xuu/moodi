@@ -28,10 +28,18 @@ interface ScanSummaryModalProps {
 const statDisplayName = {
   overall_health: "Overall Health",
   hunger: "Hunger",
-  stress_level: "Stress Level",
+  stress_level: "Stress Balance",
   energy_level: "Energy Level",
   sleep_quality: "Sleep Quality",
 };
+
+const displayOrder: Array<keyof ScanSummaryModalProps["summary"]> = [
+  "overall_health",
+  "hunger",
+  "energy_level",
+  "stress_level",
+  "sleep_quality",
+];
 
 const ScanSummaryModal = ({ open, onOpenChange, summary }: ScanSummaryModalProps) => {
   if (!summary) return null;
@@ -46,9 +54,10 @@ const ScanSummaryModal = ({ open, onOpenChange, summary }: ScanSummaryModalProps
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="text-sm space-y-2">
-          {Object.entries(summary).map(([key, value]) => {
-            if (key === 'quest') return null;
-            const displayName = statDisplayName[key as keyof typeof statDisplayName] || key;
+          {displayOrder.map((key) => {
+            const value = summary[key];
+            if (!value) return null;
+            const displayName = statDisplayName[key] || key;
             return (
               <div key={key}>
                 <span className="font-semibold">{displayName}:</span> {value.score}/100 - <span className="italic">{value.justification}</span>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, ReactElement } from "react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
 import mascot from "@/assets/mascots/mascot.png";
@@ -11,7 +11,7 @@ import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
 import HungerIcon from "@/components/icons/HungerIcon";
 import StressIcon from "@/components/icons/StressIcon";
-import { Moon } from "lucide-react";
+import PhysicalIcon from "@/components/icons/PhysicalIcon";
 import TaskIcon from "@/components/icons/TaskIcon";
 import ChatIcon from "@/components/icons/ChatIcon";
 import SettingsIcon from "@/components/icons/SettingsIcon";
@@ -25,6 +25,8 @@ import PlayButton from "@/components/PlayButton";
 import RefreshIcon from "@/components/icons/RefreshIcon";
 import { authStorage, authAPI } from "@/lib/api";
 import ScanSummaryModal from "@/components/ScanSummaryModal";
+import NapIcon from "@/components/icons/NapIcon";
+import { Activity, Trees } from "lucide-react";
 
 // Define an interface for the stats for type safety
 interface Stat {
@@ -47,6 +49,131 @@ interface ScanSummary {
   sleep_quality: Justification;
 }
 
+const TASK_THRESHOLD = 75;
+const MIN_TASKS = 2;
+
+type StatKey = "overall_health" | "hunger" | "energy_level" | "stress_level" | "sleep_quality";
+
+type ScanVitals = {
+  pulse?: number[];
+  breathing?: number[];
+  ie_ratio?: number[];
+  breath_amp?: number[];
+  blood_pressure?: number[];
+  apnea?: number[];
+};
+
+const taskBuilders: Record<StatKey, () => Task> = {
+  overall_health: () => ({
+    id: "overall_health",
+    title: "Daily Check In",
+    description: "Start your day with a quick scan to refresh your vitals and see what's new.",
+    completed: false,
+    taskType: "Daily Check In",
+    action: "Start today's scan to refresh your vitals",
+    icon: <HeartIcon className="text-primary-accent ml-2" width={28} height={28} />,
+    instructions: [
+      "Ready for today's adventure?",
+      "Let's start today's scan to refresh your vitals",
+      "and see what's new!",
+    ],
+    buttonText: "start scanning",
+  }),
+  hunger: () => ({
+    id: "hunger",
+    title: "Hunger Low — Have a healthy snack",
+    description: "Your hunger levels indicate you may need nourishment. A healthy snack can help maintain your energy.",
+    completed: false,
+    taskType: "Hunger Support",
+    action: "Have a healthy snack",
+    icon: <NapIcon className="text-primary-accent ml-2" width={32} height={32} />,
+    instructions: [
+      "Choose a nutritious snack",
+      "Take a picture of your snack",
+      " - Scan yourself after eating to reassess vitals",
+    ],
+    buttonText: "take a picture",
+    aiReason: "Reason for the action: (ai text)",
+  }),
+  energy_level: () => ({
+    id: "energy_level",
+    title: "Energy Low — Take a 30-min power nap",
+    description: "Your energy levels are below optimal. A short power nap can help restore your alertness and improve cognitive function.",
+    completed: false,
+    taskType: "Energy Support",
+    action: "Take a 30-min power nap",
+    icon: <NapIcon className="text-primary-accent ml-2" width={32} height={32} />,
+    instructions: [
+      "Take a picture of your napping area to start a",
+      "30-min timer",
+      " - Scan yourself after 30 mins to reassess vitals",
+    ],
+    buttonText: "take a picture",
+    timerDuration: 30 * 60,
+    aiReason: "Reason for the action: (ai text)",
+  }),
+  stress_level: () => ({
+    id: "stress_level",
+    title: "Stress High — Take a 10-min breathing exercise",
+    description: "Your stress levels are elevated. A brief breathing exercise can help calm your nervous system.",
+    completed: false,
+    taskType: "Stress Relief",
+    action: "Take a 10-min breathing exercise",
+    icon: <Activity className="text-primary-accent ml-2" width={32} height={32} />,
+    instructions: [
+      "Find a quiet space and sit comfortably",
+      "10-min timer",
+      " - Scan yourself after 10 mins to reassess vitals",
+    ],
+    buttonText: "start exercise",
+    timerDuration: 10 * 60,
+    aiReason: "Reason for the action: (ai text)",
+  }),
+  sleep_quality: () => ({
+    id: "sleep_quality",
+    title: "Go for a nature walk",
+    description: "Spending time in nature can help reduce stress, improve mood, and boost overall well-being.",
+    completed: false,
+    taskType: "Sleep Support",
+    action: "Go for a 20-min nature walk",
+    icon: <Trees className="text-primary-accent ml-2" width={32} height={32} />,
+    instructions: [
+      "Find a nearby park or nature trail",
+      "20-min timer",
+      " - Scan yourself after the walk to reassess vitals",
+    ],
+    buttonText: "start walk",
+    timerDuration: 20 * 60,
+    aiReason: "Reason for the action: (ai text)",
+  }),
+};
+
+const buildTasksFromStats = (statValues: Record<StatKey, number>): Task[] => {
+  const orderedKeys: StatKey[] = ["overall_health", "hunger", "energy_level", "stress_level", "sleep_quality"];
+
+  const tasks: Task[] = [];
+  orderedKeys.forEach((key) => {
+    if (statValues[key] < TASK_THRESHOLD) {
+      const template = taskBuilders[key];
+      if (template) tasks.push(template());
+    }
+  });
+
+  if (tasks.length < MIN_TASKS) {
+    const missingKeys = orderedKeys
+      .filter((key) => !tasks.find((task) => task.id === key))
+      .sort((a, b) => statValues[a] - statValues[b]);
+
+    for (const key of missingKeys) {
+      if (tasks.length >= MIN_TASKS) break;
+      const template = taskBuilders[key];
+      if (template) tasks.push(template());
+    }
+  }
+
+  return tasks.slice(0, 4);
+};
+
 const Dashboard = () => {
   const [username, setUsername] = useState<string>("");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
@@ -55,15 +182,15 @@ const Dashboard = () => {
   const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false);
   const [dailyCheckInOpen, setDailyCheckInOpen] = useState<boolean>(false);
   const [newTasks, setNewTasks] = useState<Task[]>([]);
-  const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
-  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
   const initialStats: Stat[] = [
     { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
-    { icon: StressIcon, value: 50, max: 100, description: "Stress level and tension. Lower is better." },
-    { icon: Moon, value: 50, max: 100, description: "Physical wellness and fitness" },
+    { icon: StressIcon, value: 50, max: 100, description: "Stress balance and calmness. Higher is calmer." },
+    { icon: PhysicalIcon, value: 50, max: 100, description: "Physical wellness and fitness" },
   ];
+  const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
 
   const [rawStats, setRawStats] = useState<{
     overall_health: number;
@@ -79,6 +206,30 @@ const Dashboard = () => {
     sleep_quality: initialStats[4].value,
   });
   const [stats, setStats] = useState<Stat[]>(initialStats);
+  const [scanVitals, setScanVitals] = useState<ScanVitals | null>(null);
+
+  const fetchScanVitals = useCallback(async () => {
+    try {
+      if (typeof window === 'undefined') return;
+      if (!(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) return;
+      const response = await fetch('http://localhost:3000/api/scan/latest');
+      if (!response.ok) {
+        throw new Error('Failed to fetch latest scan');
+      }
+      const scanData = await response.json();
+      setScanVitals({
+        pulse: scanData.pulse,
+        breathing: scanData.breathing,
+        ie_ratio: scanData.ie_ratio,
+        breath_amp: scanData.breath_amp,
+        blood_pressure: scanData.blood_pressure,
+        apnea: scanData.apnea,
+      });
+      console.log('Latest scan vitals:', scanData);
+    } catch (error) {
+      console.warn('Failed to fetch scan vitals:', error);
+    }
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -88,7 +239,7 @@ const Dashboard = () => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
           
-          const response = await fetch('http://localhost:3000/api/stats', {
+        const response = await fetch('http://localhost:3000/api/stats', {
             signal: controller.signal
           });
           clearTimeout(timeoutId);
@@ -99,23 +250,30 @@ const Dashboard = () => {
           const data = await response.json();
         
         // Store raw stats for mascot selection
-        setRawStats({
+        const statSnapshot = {
             overall_health: data.overall_health,
             hunger: data.hunger,
             energy_level: data.energy_level,
             stress_level: data.stress_level,
             sleep_quality: data.sleep_quality,
-        });
+        };
+        setRawStats(statSnapshot);
         
         // Map backend data to frontend stats structure
         const newStats: Stat[] = [
             { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
-            { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-            { icon: Moon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+            { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress balance and calmness. Higher is calmer." },
+            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
         ];
         setStats(newStats);
+        setNewTasks(buildTasksFromStats(statSnapshot));
+        fetchScanVitals();
+        if (data.scan_summary) {
+          setScanSummary(data.scan_summary);
+          setIsSummaryModalOpen(true);
+        }
         } else {
           // In production, keep default stats
           console.log("Using default stats (production mode)");
@@ -127,6 +285,87 @@ const Dashboard = () => {
         }
     }
   };
+
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+
+  const resolveWebSocketUrl = () => {
+    const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
+    const defaultUrl = typeof window !== "undefined" ? `${protocol}://${window.location.hostname}:8080` : "ws://localhost:8080";
+    return import.meta.env.VITE_WS_URL || defaultUrl;
+  };
+
+  const connectWebSocket = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const url = resolveWebSocketUrl();
+
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    try {
+      const socket = new WebSocket(url);
+      wsRef.current = socket;
+
+      socket.onopen = () => {
+        console.log("WebSocket connection established");
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'ai_analysis') {
+            console.log('Received AI analysis payload:', message.data);
+            const newStats: Stat[] = [
+                { icon: HeartIcon, value: message.data.overall_health.score, max: 100, description: "Overall health and wellness" },
+                { icon: HungerIcon, value: message.data.hunger.score, max: 100, description: "Hunger level and appetite. Higher is more full." },
+                { icon: EnergyIcon, value: message.data.energy_level.score, max: 100, description: "Energy level and vitality" },
+                { icon: StressIcon, value: message.data.stress_level.score, max: 100, description: "Stress balance and calmness. Higher is calmer." },
+                { icon: PhysicalIcon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
+            ];
+            setStats(newStats);
+            const statSnapshot = {
+              overall_health: message.data.overall_health.score,
+              hunger: message.data.hunger.score,
+              energy_level: message.data.energy_level.score,
+              stress_level: message.data.stress_level.score,
+              sleep_quality: message.data.sleep_quality.score,
+            } as Record<StatKey, number>;
+            setRawStats(statSnapshot);
+            setNewTasks(buildTasksFromStats(statSnapshot));
+            setScanSummary(message.data);
+            setIsSummaryModalOpen(true);
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      socket.onerror = (error) => {
+        console.warn('WebSocket connection error:', error);
+        socket.close();
+      };
+
+      socket.onclose = () => {
+        console.log('WebSocket connection closed, retrying in 3s');
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+        }
+        reconnectTimeoutRef.current = window.setTimeout(() => {
+          connectWebSocket();
+        }, 3000);
+      };
+    } catch (error) {
+      console.warn("Failed to connect WebSocket, retrying in 3s:", error);
+      reconnectTimeoutRef.current = window.setTimeout(() => {
+        connectWebSocket();
+      }, 3000);
+    }
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -162,69 +401,20 @@ const Dashboard = () => {
     loadUser();
     fetchStats();
 
-    // Only connect to WebSocket if we're in development (localhost)
-    let ws: WebSocket | null = null;
-    try {
-      // Check if we're in a browser environment and WebSocket is available
-      // Only connect in development
-      if (typeof WebSocket !== 'undefined' && 
-          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        ws = new WebSocket('ws://localhost:8080');
-        
-        // Set a connection timeout
-        const connectionTimeout = setTimeout(() => {
-          if (ws && ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
-            console.warn('WebSocket connection timeout');
-          }
-        }, 2000); // 2 second timeout
-
-        ws.onopen = () => {
-          clearTimeout(connectionTimeout);
-          console.log('WebSocket connection established');
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data);
-            if (message.type === 'ai_analysis') {
-              console.log('Received AI analysis:', message.data);
-              const newStats: Stat[] = [
-                  { icon: HeartIcon, value: message.data.overall_health.score, max: 100, description: "Overall health and wellness" },
-                  { icon: HungerIcon, value: message.data.hunger.score, max: 100, description: "Hunger level and appetite. Higher is more full." },
-                  { icon: EnergyIcon, value: message.data.energy_level.score, max: 100, description: "Energy level and vitality" },
-                  { icon: StressIcon, value: message.data.stress_level.score, max: 100, description: "Stress level and tension. Lower is better." },
-                  { icon: Moon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
-              ];
-              setStats(newStats);
-              setScanSummary(message.data);
-              setIsSummaryModalOpen(true);
-            }
-          } catch (error) {
-            console.error('Error parsing WebSocket message:', error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          clearTimeout(connectionTimeout);
-          console.warn('WebSocket connection error (this is normal if backend is not running):', error);
-        };
-
-        ws.onclose = () => {
-          clearTimeout(connectionTimeout);
-          console.log('WebSocket connection closed');
-        };
-      }
-    } catch (error) {
-      console.warn('WebSocket connection failed (this is normal if backend is not running):', error);
-    }
+    connectWebSocket();
 
     return () => {
-      if (ws) {
-        ws.close();
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
     };
-  }, []);
+  }, [connectWebSocket]);
 
   const getColorClass = (value: number, max: number): string => {
     const percentage = (value / max) * 100;
@@ -277,6 +467,7 @@ const Dashboard = () => {
         }
         // After recomputing, fetch the latest stats to update the UI
         const data = await response.json();
+        console.log('Fetched stats payload:', data);
         
         // Store raw stats for mascot selection
         setRawStats({
@@ -291,8 +482,8 @@ const Dashboard = () => {
             { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
-            { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-            { icon: Moon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+            { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress balance and calmness. Higher is calmer." },
+            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
         ];
         setStats(newStats);
         alert("Stats have been recomputed based on the latest scan.");
@@ -369,6 +560,7 @@ const Dashboard = () => {
           open={taskModalOpen} 
           onOpenChange={setTaskModalOpen}
           username={username}
+          tasks={newTasks}
           onTasksUpdate={(tasks) => {
             setNewTasks(tasks);
             setDailyCheckInOpen(true);
@@ -400,16 +592,14 @@ const Dashboard = () => {
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 const colorClass = getColorClass(stat.value, stat.max);
-                // Check if this is the Moon icon (Physical wellness stat - last one)
-                const isMoonIcon = stat.description === "Physical wellness and fitness";
                 return (
                   <div key={index} className="relative">
                     <div className="flex items-center gap-3 bg-foreground/10 backdrop-blur-sm rounded-full p-2 pr-5">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 cursor-help`}>
-                            <Icon className={`w-5 h-5 ${isMoonIcon ? 'text-primary-accent' : 'text-white'}`} />
-                      </div>
+                            <Icon className="w-5 h-5 text-white" />
+                          </div>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>{stat.description}</p>
@@ -432,25 +622,60 @@ const Dashboard = () => {
               })}
             </div>
 
-            {/* Graphs */}
+            {/* Raw Vitals Snapshot */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-foreground/90 backdrop-blur-sm rounded-3xl p-6">
-                <h3 className="text-background text-sm mb-4">energy trend graph</h3>
-                <svg viewBox="0 0 200 100" className="w-full h-24">
-                  <polyline
-                    points="0,70 40,30 80,50 120,20 160,60 200,40"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="text-background"
-                  />
-                </svg>
+              <div className="bg-foreground/90 backdrop-blur-sm rounded-3xl p-6 space-y-3">
+                <h3 className="text-background text-sm uppercase tracking-wide">scan vitals</h3>
+                <div className="flex flex-col gap-2 text-background/90 text-sm">
+                  <div className="flex justify-between">
+                    <span>Pulse</span>
+                    <span>{scanVitals?.pulse?.[0] ?? "--"} bpm</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Breathing</span>
+                    <span>{scanVitals?.breathing?.[0] ?? "--"} rpm</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Inhale/Exhale Ratio</span>
+                    <span>{scanVitals?.ie_ratio?.[0] ?? "--"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Breath Amplitude</span>
+                    <span>{scanVitals?.breath_amp?.[0] ?? "--"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Blood Pressure (phasic)</span>
+                    <span>{scanVitals?.blood_pressure?.[0] ?? "--"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Apnea</span>
+                    <span>{scanVitals?.apnea?.[0] ?? "--"}</span>
+                  </div>
+                </div>
               </div>
               
-              <div className="bg-foreground/90 backdrop-blur-sm rounded-3xl p-6 flex items-center justify-center">
-                <h3 className="text-background text-2xl font-semibold text-center">
-                  stress<br />trend<br />graph
-                </h3>
+              <div className="bg-foreground/90 backdrop-blur-sm rounded-3xl p-6 flex flex-col gap-3">
+                <h3 className="text-background text-sm uppercase tracking-wide">gpt analysis summary</h3>
+                {scanSummary ? (
+                  <div className="space-y-3 text-background/90 text-sm">
+                    {(["overall_health","hunger","energy_level","stress_level","sleep_quality"] as Array<keyof ScanSummary>).map((key) => {
+                      const entry = scanSummary[key];
+                      return (
+                        <div key={key}>
+                          <div className="flex justify-between font-semibold capitalize">
+                            <span>{key.replace("_"," ")}</span>
+                            <span>{entry.score}/100</span>
+                          </div>
+                          <p className="text-xs text-background/70">{entry.justification}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-background/70 text-xs">
+                    Run a scan to trigger the GPT summary of your vitals.
+                  </p>
+                )}
               </div>
               </div>
             </div>

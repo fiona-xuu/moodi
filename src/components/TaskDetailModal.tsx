@@ -14,9 +14,12 @@ interface TaskDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task;
+  onRequestPhotoUpload?: (task: Task) => void;
+  isUploadingProof?: boolean;
+  uploadStatus?: string | null;
 }
 
-const TaskDetailModal = ({ open, onOpenChange, task }: TaskDetailModalProps) => {
+const TaskDetailModal = ({ open, onOpenChange, task, onRequestPhotoUpload, isUploadingProof, uploadStatus }: TaskDetailModalProps) => {
   const [timer, setTimer] = useState(task.timerDuration || 0);
   const [isTimerActive, setIsTimerActive] = useState(false);
 
@@ -96,20 +99,27 @@ const TaskDetailModal = ({ open, onOpenChange, task }: TaskDetailModalProps) => 
           <div className="pt-4">
             <GradientButton
               onClick={() => {
-                // Handle button action - can be customized per task type
-                console.log(`${task.buttonText} clicked for task ${task.id}`);
-                
-                // Start timer if task has a timer duration
+                if (task.requiresPhoto && onRequestPhotoUpload) {
+                  onRequestPhotoUpload(task);
+                  return;
+                }
                 if (task.timerDuration && !isTimerActive) {
                   setIsTimerActive(true);
                   setTimer(task.timerDuration);
                 }
               }}
-              disabled={isTimerActive && task.timerDuration !== undefined}
+              disabled={(task.requiresPhoto && isUploadingProof) || (isTimerActive && task.timerDuration !== undefined)}
               className="w-full inder-text text-lg font-bold py-3 rounded-lg shadow-md hover:scale-105 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              {isTimerActive && task.timerDuration ? `timer: ${formatTimer(timer)}` : task.buttonText}
+              {task.requiresPhoto && isUploadingProof
+                ? "uploading photo..."
+                : task.requiresPhoto
+                  ? task.buttonText
+                  : (isTimerActive && task.timerDuration ? `timer: ${formatTimer(timer)}` : task.buttonText)}
             </GradientButton>
+            {uploadStatus && task.requiresPhoto && (
+              <p className="text-primary-accent/70 text-xs mt-2">{uploadStatus}</p>
+            )}
           </div>
         </div>
       </DialogContent>
