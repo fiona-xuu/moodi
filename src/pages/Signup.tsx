@@ -67,7 +67,8 @@ const Signup = () => {
           >
             Join moodi
           </h1>
-          <p className="text-muted-foreground mb-8 text-lg">
+          <div className="h-px my-4 bg-white/40 w-full"></div>
+          <p className="text-muted-foreground mb-6 text-lg">
             Start your mindful journey today
           </p>
           

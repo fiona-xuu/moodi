@@ -67,6 +67,7 @@ const Login = () => {
           >
             Welcome back
           </h1>
+          <div className="h-px my-4 bg-white/40 w-full"></div>
           <p className="text-muted-foreground mb-8 text-lg">
             Login to continue your journey
           </p>
