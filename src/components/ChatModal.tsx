@@ -232,7 +232,7 @@ const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
           {/* Input Field */}
           <div className="absolute bottom-0 left-0 right-0 p-10 bg-transparent">
             <form onSubmit={handleSendMessage} className="relative space-y-3">
-              <div className="flex items-center gap-3 justify-between px-2">
+              <div className="flex items-center gap-3 justify- ml-4 px-2">
                 <label className="inline-flex items-center gap-2 text-primary-accent/80 text-sm cursor-pointer">
                   <input
                     ref={fileInputRef}
@@ -263,7 +263,7 @@ const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
                 placeholder="Tell Lumi what you need..."
                 className="w-full bg-white/90 rounded-full px-12 py-7 text-primary-accent placeholder:text-primary-accent/70 shadow-lg text-center border-none focus:ring-0 focus:outline-none !text-lg placeholder:!text-lg"
               />
-              <ChatIcon className="absolute left-12 top-[65%] -translate-y-1/2 h-7 w-7 text-primary-accent pointer-events-none" />
+              <ChatIcon className="absolute left-6 top-[53%] -translate-y-1/2 h-7 w-7 text-primary-accent/90 pointer-events-none" />
             </form>
           </div>
         </div>

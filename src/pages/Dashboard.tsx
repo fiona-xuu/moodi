@@ -11,7 +11,7 @@ import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
 import HungerIcon from "@/components/icons/HungerIcon";
 import StressIcon from "@/components/icons/StressIcon";
-import PhysicalIcon from "@/components/icons/PhysicalIcon";
+import { Moon } from "lucide-react";
 import TaskIcon from "@/components/icons/TaskIcon";
 import ChatIcon from "@/components/icons/ChatIcon";
 import SettingsIcon from "@/components/icons/SettingsIcon";
@@ -187,7 +187,7 @@ const Dashboard = () => {
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
     { icon: StressIcon, value: 50, max: 100, description: "Stress balance and calmness. Higher is calmer." },
-    { icon: PhysicalIcon, value: 50, max: 100, description: "Physical wellness and fitness" },
+    { icon: Moon, value: 50, max: 100, description: "Sleep quality and restfulness." },
   ];
   const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
@@ -265,7 +265,7 @@ const Dashboard = () => {
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
             { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress balance and calmness. Higher is calmer." },
-            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+            { icon: Moon, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness." },
         ];
         setStats(newStats);
         setNewTasks(buildTasksFromStats(statSnapshot));
@@ -325,7 +325,7 @@ const Dashboard = () => {
                 { icon: HungerIcon, value: message.data.hunger.score, max: 100, description: "Hunger level and appetite. Higher is more full." },
                 { icon: EnergyIcon, value: message.data.energy_level.score, max: 100, description: "Energy level and vitality" },
                 { icon: StressIcon, value: message.data.stress_level.score, max: 100, description: "Stress balance and calmness. Higher is calmer." },
-                { icon: PhysicalIcon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
+                { icon: Moon, value: message.data.sleep_quality.score, max: 100, description: "Sleep quality and restfulness." },
             ];
             setStats(newStats);
             const statSnapshot = {
@@ -483,7 +483,7 @@ const Dashboard = () => {
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
             { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress balance and calmness. Higher is calmer." },
-            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+            { icon: Moon, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness." },
         ];
         setStats(newStats);
         alert("Stats have been recomputed based on the latest scan.");
@@ -585,20 +585,20 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 -mt-1">
           {/* Left Column - Stats */}
           <div className="ml-4">
-          <div>
-            
             {/* Stats Bars */}
             <div className="space-y-5 mb-12">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 const colorClass = getColorClass(stat.value, stat.max);
+                // Check if this is the Moon icon (Physical wellness stat)
+                const isMoonIcon = stat.description === "Sleep quality and restfulness." || stat.description === "Physical wellness and fitness";
                 return (
                   <div key={index} className="relative">
                     <div className="flex items-center gap-3 bg-foreground/10 backdrop-blur-sm rounded-full p-2 pr-5">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 cursor-help`}>
-                            <Icon className="w-5 h-5 text-white" />
+                            <Icon className={`w-5 h-5 ${isMoonIcon ? 'text-primary-accent' : 'text-white'}`} />
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -624,40 +624,40 @@ const Dashboard = () => {
 
             {/* Raw Vitals Snapshot */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-foreground/90 backdrop-blur-sm rounded-3xl p-6 space-y-3">
-                <h3 className="text-background text-sm uppercase tracking-wide">scan vitals</h3>
-                <div className="flex flex-col gap-2 text-background/90 text-sm">
+              <div className="bg-foreground/10 backdrop-blur-sm rounded-3xl px-6 pt-4 pb-6 space-y-3">
+                <h3 className="text-white text-lg uppercase tracking-wide inder-text font-semibold mb-2">scan vitals</h3>
+                <div className="flex flex-col gap-2 text-white/90 text-sm inder-text">
                   <div className="flex justify-between">
                     <span>Pulse</span>
-                    <span>{scanVitals?.pulse?.[0] ?? "--"} bpm</span>
+                    <span className="font-medium">{scanVitals?.pulse?.[0] ?? "--"} bpm</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Breathing</span>
-                    <span>{scanVitals?.breathing?.[0] ?? "--"} rpm</span>
+                    <span className="font-medium">{scanVitals?.breathing?.[0] ?? "--"} rpm</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Inhale/Exhale Ratio</span>
-                    <span>{scanVitals?.ie_ratio?.[0] ?? "--"}</span>
+                    <span className="font-medium">{scanVitals?.ie_ratio?.[0] ?? "--"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Breath Amplitude</span>
-                    <span>{scanVitals?.breath_amp?.[0] ?? "--"}</span>
+                    <span className="font-medium">{scanVitals?.breath_amp?.[0] ?? "--"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Blood Pressure (phasic)</span>
-                    <span>{scanVitals?.blood_pressure?.[0] ?? "--"}</span>
+                    <span className="font-medium">{scanVitals?.blood_pressure?.[0] ?? "--"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Apnea</span>
-                    <span>{scanVitals?.apnea?.[0] ?? "--"}</span>
+                    <span className="font-medium">{scanVitals?.apnea?.[0] ?? "--"}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-foreground/90 backdrop-blur-sm rounded-3xl p-6 flex flex-col gap-3">
-                <h3 className="text-background text-sm uppercase tracking-wide">gpt analysis summary</h3>
+              <div className="bg-foreground/10 backdrop-blur-sm rounded-3xl px-6 pt-4 pb-6 flex flex-col gap-2">
+                <h3 className="text-white text-lg uppercase tracking-wide inder-text font-semibold mb-2">gpt analysis summary</h3>
                 {scanSummary ? (
-                  <div className="space-y-3 text-background/90 text-sm">
+                  <div className="space-y-3 text-white text-sm inder-text">
                     {(["overall_health","hunger","energy_level","stress_level","sleep_quality"] as Array<keyof ScanSummary>).map((key) => {
                       const entry = scanSummary[key];
                       return (
@@ -666,17 +666,16 @@ const Dashboard = () => {
                             <span>{key.replace("_"," ")}</span>
                             <span>{entry.score}/100</span>
                           </div>
-                          <p className="text-xs text-background/70">{entry.justification}</p>
+                          <p className="text-sm text-white/70">{entry.justification}</p>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-background/70 text-xs">
+                  <p className="text-white/90 text-sm inder-text">
                     Run a scan to trigger the GPT summary of your vitals.
                   </p>
                 )}
-              </div>
               </div>
             </div>
           </div>
