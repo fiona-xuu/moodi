@@ -31,11 +31,11 @@ const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
   const [stats, setStats] = useState<Stat[]>([
-    { icon: PhysicalIcon, value: 50, max: 100, description: "Overall physical health and fitness" },
+    { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
     { icon: StressIcon, value: 50, max: 100, description: "Stress level and tension. Lower is better." },
-    { icon: HeartIcon, value: 50, max: 100, description: "Sleep quality and restfulness" },
+    { icon: PhysicalIcon, value: 50, max: 100, description: "Physical wellness and fitness" },
   ]);
 
   useEffect(() => {
@@ -68,14 +68,14 @@ const Dashboard = () => {
             }
             const data = await response.json();
             
-            // Map backend data to frontend stats structure
-            const newStats: Stat[] = [
-                { icon: PhysicalIcon, value: data.overall_health, max: 100, description: "Overall physical health and fitness" },
-                { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
-                { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
-                { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-                { icon: HeartIcon, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
-            ];
+                // Map backend data to frontend stats structure
+                const newStats: Stat[] = [
+                    { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
+                    { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
+                    { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
+                    { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
+                    { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+                ];
             setStats(newStats);
 
         } catch (error) {
@@ -110,11 +110,11 @@ const Dashboard = () => {
         // After recomputing, fetch the latest stats to update the UI
         const data = await response.json();
         const newStats: Stat[] = [
-            { icon: PhysicalIcon, value: data.overall_health, max: 100, description: "Overall physical health and fitness" },
+            { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
             { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-            { icon: HeartIcon, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
+            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
         ];
         setStats(newStats);
         alert("Stats have been recomputed based on the latest scan.");
