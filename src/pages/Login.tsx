@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { authAPI, authStorage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import loginSignupBackground from "@/assets/login-signup-background.png";
+import GradientButton from "@/components/GradientButton";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -46,60 +47,69 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--gradient-twilight-from))] via-[hsl(var(--gradient-twilight-via))] to-[hsl(var(--gradient-twilight-to))] flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center gap-2 text-foreground/80 hover:text-foreground mb-8 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6 inter-text">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${loginSignupBackground})` }}
+      />
+      
+      <div className="w-full max-w-md relative z-10">
+        <Link to="/" className="inline-flex items-center gap-2 text-foreground/80 hover:text-foreground mb-8 transition-colors text-lg">
+          <ArrowLeft className="w-5 h-5" />
           Back to home
         </Link>
         
         <div className="glass-button rounded-2xl p-8 shadow-2xl">
-          <h1 className="font-display text-4xl font-bold text-foreground mb-2">
+          <h1 
+            className="header text-4xl font-bold mb-2"
+            style={{ letterSpacing: '0' }}
+          >
             Welcome back
           </h1>
-          <p className="text-muted-foreground mb-8">
+          <p className="text-muted-foreground mb-8 text-lg">
             Login to continue your journey
           </p>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">Email</Label>
+              <Label htmlFor="email" className="text-foreground text-lg">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-background/50 border-border focus:border-primary transition-colors"
+                className="bg-background/50 border-border focus:border-primary transition-colors text-lg md:text-lg !text-lg"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">Password</Label>
+              <Label htmlFor="password" className="text-foreground text-lg">Password</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-background/50 border-border focus:border-primary transition-colors"
+                className="bg-background/50 border-border focus:border-primary transition-colors text-lg md:text-lg !text-lg"
                 required
               />
             </div>
             
-            <Button 
+            <GradientButton 
               type="submit" 
-              className="w-full bg-primary hover:bg-primary/90 transition-all duration-300 hover:scale-105 cursor-pointer"
+              className="w-full inder-text text-lg font-bold py-3 rounded-lg shadow-md hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-b from-[hsl(0,53%,77%)] to-[hsl(332,38%,61%)]"
               disabled={isLoading}
             >
               {isLoading ? "Logging in..." : "Login"}
-            </Button>
+            </GradientButton>
           </form>
           
-          <p className="text-center text-muted-foreground mt-6">
+          <p className="text-center text-muted-foreground mt-6 text-lg">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
+            <Link to="/signup" className="text-[hsl(0,53%,77%)] hover:underline text-lg">
               Sign up
             </Link>
           </p>
@@ -110,3 +120,4 @@ const Login = () => {
 };
 
 export default Login;
+
