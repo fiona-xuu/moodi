@@ -288,11 +288,30 @@ export const authAPI = {
 
   // Logout user
   logout: async (): Promise<void> => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Supabase signOut error:', error);
+        // Still clear local storage even if Supabase signOut fails
+        authStorage.clear();
+        // Only throw error if it's a critical issue
+        if (error.message && !error.message.includes('session')) {
+          throw new Error('Unable to log out. Please try again.');
+        }
+        // For session-related errors, we'll still clear local storage and consider it successful
+        return;
+      }
+      authStorage.clear();
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Always clear local storage on logout attempt, even if there's an error
+      authStorage.clear();
+      // Re-throw the error if it's not already handled
+      if (error instanceof Error) {
+        throw error;
+      }
       throw new Error('Unable to log out. Please try again.');
     }
-    authStorage.clear();
   },
 };
 
