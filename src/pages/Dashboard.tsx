@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
 import mascot from "@/assets/mascot.png";
+import overall from "@/assets/overall1.png";
+import hungry from "@/assets/hungry1.png";
+import sleepy from "@/assets/sleepy1.png";
+import stressed from "@/assets/stressed1.png";
 import Rectangle from "@/components/Rectangle";
 import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
@@ -30,13 +34,28 @@ const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
-  const [stats, setStats] = useState<Stat[]>([
-    { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
+  const initialStats = [
+    { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },  // average of other stats
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
     { icon: StressIcon, value: 50, max: 100, description: "Stress level and tension. Lower is better." },
     { icon: PhysicalIcon, value: 50, max: 100, description: "Physical wellness and fitness" },
-  ]);
+  ];
+
+  const [rawStats, setRawStats] = useState<{
+    overall_health: number;
+    hunger: number;
+    energy_level: number;
+    stress_level: number;
+    sleep_quality: number;
+  }>({
+    overall_health: initialStats[0].value,
+    hunger: initialStats[1].value,
+    energy_level: initialStats[2].value,
+    stress_level: initialStats[3].value,
+    sleep_quality: initialStats[4].value,
+  });
+  const [stats, setStats] = useState<Stat[]>(initialStats);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -67,6 +86,15 @@ const Dashboard = () => {
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
+            
+            // Store raw stats for mascot selection
+            setRawStats({
+                overall_health: data.overall_health,
+                hunger: data.hunger,
+                energy_level: data.energy_level,
+                stress_level: data.stress_level,
+                sleep_quality: data.sleep_quality,
+            });
             
                 // Map backend data to frontend stats structure
                 const newStats: Stat[] = [
@@ -100,6 +128,36 @@ const Dashboard = () => {
     }
   };
 
+  const getMascotImage = () => {
+    const { overall_health, hunger, energy_level, stress_level, sleep_quality } = rawStats;
+    
+    // If overall_health is 29 or lower, use "overall"
+    if (overall_health <= 29) {
+      return overall;
+    }
+    
+    // If all stats are 70 or above, use "mascot"
+    if (overall_health >= 70 && hunger >= 70 && energy_level >= 70 && stress_level >= 70 && sleep_quality >= 70) {
+      return mascot;
+    }
+    
+    // Otherwise, find the lowest stat (check in priority order for ties)
+    const statsToCheck = [
+      { name: 'overall_health', value: overall_health, image: overall },
+      { name: 'hunger', value: hunger, image: hungry },
+      { name: 'energy_level', value: energy_level, image: sleepy },
+      { name: 'stress_level', value: stress_level, image: stressed },
+      { name: 'sleep_quality', value: sleep_quality, image: sleepy },
+    ];
+    
+    // Find the minimum value
+    const minValue = Math.min(hunger, energy_level, stress_level, sleep_quality);
+    
+    // Return the first stat with the minimum value (priority order)
+    const lowestStat = statsToCheck.find(stat => stat.value === minValue);
+    return lowestStat?.image || mascot;
+  };
+
   const handleRefreshStats = async () => {
     try {
         console.log("Recomputing stats from the latest scan...");
@@ -109,6 +167,16 @@ const Dashboard = () => {
         }
         // After recomputing, fetch the latest stats to update the UI
         const data = await response.json();
+        
+        // Store raw stats for mascot selection
+        setRawStats({
+            overall_health: data.overall_health,
+            hunger: data.hunger,
+            energy_level: data.energy_level,
+            stress_level: data.stress_level,
+            sleep_quality: data.sleep_quality,
+        });
+        
         const newStats: Stat[] = [
             { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
@@ -248,7 +316,7 @@ const Dashboard = () => {
           <div className="flex flex-col items-center justify-center gap-8 mt-4">
             {/* Mascot */}
             <div className="relative flex items-center justify-center">
-              <img src={mascot} alt="moodi mascot" className="w-[500px] h-auto object-contain animate-bounce-gentle" />
+              <img src={getMascotImage()} alt="moodi mascot" className="w-[500px] h-auto object-contain animate-bounce-gentle" />
             </div>
           </div>
         </div>
