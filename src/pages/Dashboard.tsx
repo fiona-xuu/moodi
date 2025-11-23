@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
+import mascot from "@/assets/mascot.png";
 import Rectangle from "@/components/Rectangle";
 import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
@@ -141,20 +142,20 @@ const Dashboard = () => {
           
           <div className="flex flex-col gap-3 items-end">
             <div className="flex gap-3 items-center">
-              <button className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
-                <TaskIcon className="w-6 h-6 text-foreground" />
+              <button className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
+                <TaskIcon className="w-7 h-7 text-foreground" />
               </button>
               <button 
                 onClick={() => setChatOpen(true)}
-                className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
+                className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
               >
-                <ChatIcon className="w-8 h-8 text-primary-text" />
+                <ChatIcon className="w-9 h-9 text-primary-text" />
               </button>
               <button
                 onClick={() => setSettingsOpen(true)}
-                className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
+                className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
               >
-                <SettingsIcon className="w-8 h-8 text-foreground" />
+                <SettingsIcon className="w-9 h-9 text-foreground" />
               </button>
             </div>
             <div className="flex gap-3 items-center">
@@ -185,7 +186,7 @@ const Dashboard = () => {
           <div>
             
             {/* Stats Bars */}
-            <div className="space-y-4 mb-8">
+            <div className="space-y-5 mb-12">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 const colorClass = getColorClass(stat.value, stat.max);
@@ -245,30 +246,9 @@ const Dashboard = () => {
 
           {/* Right Column - Mood Indicators */}
           <div className="flex flex-col items-center justify-center gap-8 mt-4">
-            {/* Sad Face */}
-            <div className="relative">
-              <div className="w-64 h-64 rounded-full border-[20px] border-foreground bg-transparent flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  {/* Eyes */}
-                  <rect x="25" y="30" width="15" height="15" fill="currentColor" className="text-foreground" />
-                  <rect x="60" y="30" width="15" height="15" fill="currentColor" className="text-foreground" />
-                  {/* Sad Mouth */}
-                  <path d="M 30 70 Q 50 60 70 70" stroke="currentColor" strokeWidth="8" fill="none" className="text-foreground" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Happy Face */}
-            <div className="relative">
-              <div className="w-64 h-64 rounded-full border-[20px] border-foreground bg-transparent flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                  {/* Eyes */}
-                  <rect x="25" y="35" width="15" height="15" fill="currentColor" className="text-foreground" />
-                  <rect x="60" y="35" width="15" height="15" fill="currentColor" className="text-foreground" />
-                  {/* Happy Mouth */}
-                  <path d="M 30 60 Q 50 75 70 60" stroke="currentColor" strokeWidth="8" fill="none" className="text-foreground" />
-                </svg>
-              </div>
+            {/* Mascot */}
+            <div className="relative flex items-center justify-center">
+              <img src={mascot} alt="moodi mascot" className="w-[500px] h-auto object-contain animate-bounce-gentle" />
             </div>
           </div>
         </div>
