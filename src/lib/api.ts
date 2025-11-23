@@ -250,21 +250,27 @@ export const authAPI = {
       // Note: Supabase will send a confirmation email for email changes
     }
 
-    // Update username in profiles table
-    const updateData: { username: string; phone_number?: string } = { username: username.trim() };
+    // Use upsert to either update existing profile or create new one
+    const profileData: { id: string; username: string; phone_number?: string | null } = {
+      id: user.id,
+      username: username.trim(),
+    };
+    
     if (phoneNumber !== undefined) {
-      updateData.phone_number = phoneNumber.trim() || null;
+      profileData.phone_number = phoneNumber.trim() || null;
     }
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .update(updateData)
-      .eq('id', user.id)
+      .upsert(profileData, {
+        onConflict: 'id',
+      })
       .select()
       .single();
 
     if (profileError) {
-      throw new Error('Unable to update your profile. Please try again.');
+      console.error('Profile upsert error:', profileError);
+      throw new Error(`Unable to update your profile: ${profileError.message || 'Please try again.'}`);
     }
 
     // Get updated user email

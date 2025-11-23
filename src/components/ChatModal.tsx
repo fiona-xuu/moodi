@@ -98,9 +98,9 @@ const ChatModal = ({ open, onOpenChange }: ChatModalProps) => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Lets talk about ..."
-                className="w-full bg-white/90 rounded-full px-12 py-6 text-primary-accent placeholder:text-primary-accent shadow-lg text-center border-none focus:ring-0 focus:outline-none !text-lg placeholder:!text-lg"
+                className="w-full bg-white/90 rounded-full px-12 py-7 text-primary-accent placeholder:text-primary-accent shadow-lg text-center border-none focus:ring-0 focus:outline-none !text-lg placeholder:!text-lg"
               />
-              <ChatIcon className="absolute left-5 top-1/2 -translate-y-1/2 h-7 w-7 text-primary-accent pointer-events-none" />
+              <ChatIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-7 w-7 text-primary-accent pointer-events-none" />
             </div>
           </div>
         </div>

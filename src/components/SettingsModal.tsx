@@ -109,22 +109,64 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
   };
 
   const handleSave = async () => {
-    if (!isLoggedIn) return;
-
     setIsSaving(true);
-    try {
-      await authAPI.updateProfile(username, email, phoneNumber);
+    
+    // For guests, just update local state
+    if (!isLoggedIn) {
+      // Update original values to match the new values
+      setOriginalUsername(username);
+      setOriginalPhoneNumber(phoneNumber);
+      
+      // Update local storage for guest
+      authStorage.setUser({
+        id: 'guest',
+        username: username,
+        email: '',
+      });
+      
+      // Exit editing mode
       setIsEditing(false);
-      // Reload user data to get updated info
-      const user = await authAPI.getProfile();
-      if (user) {
-        setUsername(user.username);
-        setEmail(user.email || "");
-        setOriginalEmail(user.email || "");
-        authStorage.setUser(user);
-      }
+      
+      toast({
+        title: "Profile updated!",
+        description: "Your username has been saved locally.",
+      });
+      
+      setIsSaving(false);
+      return;
+    }
+
+    // For logged-in users, update via API
+    try {
+      const updatedUser = await authAPI.updateProfile(username, email, phoneNumber);
+      
+      // Update all fields with the new information
+      setUsername(updatedUser.username);
+      setEmail(updatedUser.email || "");
+      setPhoneNumber(phoneNumber);
+      
+      // Update original values to match the new values
+      setOriginalUsername(updatedUser.username);
+      setOriginalEmail(updatedUser.email || "");
+      setOriginalPhoneNumber(phoneNumber);
+      
+      // Update local storage
+      authStorage.setUser(updatedUser);
+      
+      // Exit editing mode
+      setIsEditing(false);
+      
+      toast({
+        title: "Profile updated!",
+        description: "Your profile information has been saved.",
+      });
     } catch (error) {
       console.error("Save error:", error);
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Unable to save profile. Please try again.",
+        variant: "destructive",
+      });
       // Reset to original values on error
       setUsername(originalUsername);
       setEmail(originalEmail);
@@ -155,50 +197,67 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
           <div className="h-px bg-primary-accent/40 w-full-"></div>
         </DialogHeader>
 
-        {/* Profile Summary */}
-        <div className="flex items-center gap-5 mb-3">
-          <div className="w-16 h-16 rounded-lg bg-white flex items-center justify-center border border-[#CFCEDB]">
-            <Pencil className="w-6 h-6 text-gray-600" />
+        {!isLoggedIn ? (
+          /* Guest View - Simple message and login button */
+          <div className="flex flex-col items-center justify-center py-2">
+            <p className="text-primary-accent text-xl inder-text -mt-3 mb-6 !text-start !w-full">
+              Login to edit settings
+            </p>
+            <GradientButton
+              onClick={handleLogin}
+              className="w-full inder-text text-xl font-bold py-3 rounded-lg shadow-md hover:scale-105 transition-all duration-300"
+            >
+              Login
+            </GradientButton>
           </div>
-          <div className="flex flex-col inder-text">
-            <span className="text-primary-accent text-xl font-bold">{username}</span>
-            {isLoggedIn && email && (
-              <span className="text-primary-accent/80 text-md">{email}</span>
-            )}
-          </div>
-        </div>
+        ) : (
+          <>
+            {/* Profile Summary */}
+            <div className="flex items-center gap-5 mb-3">
+              <div className="w-16 h-16 rounded-lg bg-white flex items-center justify-center border border-[#CFCEDB]">
+                <Pencil className="w-6 h-6 text-gray-600" />
+              </div>
+              <div className="flex flex-col inder-text">
+                <span className="text-primary-accent text-xl font-bold">{username}</span>
+                {email && (
+                  <span className="text-primary-accent/80 text-md">{email}</span>
+                )}
+              </div>
+            </div>
 
-        {/* Username Field */}
-        <div className="mb-2 inder-text">
-          <label className="block text-primary-accent text-lg font-medium mb-2">
-            Username
-          </label>
-          <div className="relative">
-            <Input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              readOnly={!isEditing}
-              placeholder="add a username ..."
-              className="bg-white border-[#CFCEDB] text-primary-accent/80 pr-10"
-            />
-            {isEditing ? (
-              <button
-                onClick={handleCancel}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-accent hover:opacity-70 transition-opacity"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={handleEdit}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-primary-accent transition-colors cursor-pointer"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
+            {/* Username Field */}
+            <div className="mb-2 inder-text">
+              <label className="block text-primary-accent text-lg font-medium mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <Input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  readOnly={!isEditing}
+                  placeholder="add a username ..."
+                  className="bg-white border-[#CFCEDB] text-primary-accent/80 pr-10"
+                />
+                {isEditing ? (
+                  <button
+                    onClick={handleCancel}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-primary-accent hover:opacity-70 transition-opacity"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleEdit}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-primary-accent transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Email Field - Only show if logged in */}
         {isLoggedIn && (
@@ -268,16 +327,20 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
           </div>
         )}
 
-        <div className="h-px bg-primary-accent/40 w-full"></div>
+        {isLoggedIn && (
+          <>
+            <div className="h-px bg-primary-accent/40 w-full"></div>
 
-        {/* Save/Logout/Login Button */}
-        <GradientButton
-          onClick={isEditing ? handleSave : (isLoggedIn ? handleLogout : handleLogin)}
-          disabled={isSaving}
-          className="w-full inder-text text-xl font-bold py-3 rounded-lg shadow-md hover:scale-105 transition-all duration-300 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? "saving..." : isEditing ? "save" : isLoggedIn ? "logout" : "login"}
-        </GradientButton>
+            {/* Save/Logout Button */}
+            <GradientButton
+              onClick={isEditing ? handleSave : handleLogout}
+              disabled={isSaving}
+              className="w-full inder-text text-xl font-bold py-3 rounded-lg shadow-md hover:scale-105 transition-all duration-300 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? "saving..." : isEditing ? "Save" : "Logout"}
+            </GradientButton>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
