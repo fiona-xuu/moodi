@@ -88,9 +88,9 @@ const Dashboard = () => {
             </button>
             <button 
               onClick={() => setChatOpen(true)}
-              className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300"
+              className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
             >
-              <ChatIcon className="w-9 h-9 text-primary-text" />
+              <ChatIcon className="w-9 h-9 text-foreground" />
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
