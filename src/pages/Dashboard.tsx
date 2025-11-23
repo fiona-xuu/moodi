@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Heart } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
 import Rectangle from "@/components/Rectangle";
+import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
 import HungerIcon from "@/components/icons/HungerIcon";
 import StressIcon from "@/components/icons/StressIcon";
@@ -48,20 +48,20 @@ const Dashboard = () => {
   const getColorClass = (value: number, max: number): string => {
     const percentage = (value / max) * 100;
     if (percentage >= 80) {
-      return "bg-green-400";
+      return "bg-green-300";
     } else if (percentage >= 50) {
-      return "bg-yellow-400";
+      return "bg-yellow-200";
     } else if (percentage >= 20) {
-      return "bg-orange-400";
+      return "bg-orange-300";
     } else {
-      return "bg-red-400";
+      return "bg-red-300";
     }
   };
 
   const stats = [
-    { icon: Heart, value: 47, max: 100, description: "Emotional well-being and mood" },
+    { icon: HeartIcon, value: 47, max: 100, description: "Emotional well-being and mood" },
     { icon: HungerIcon, value: 100, max: 100, description: "Hunger level and appetite" },
-    { icon: EnergyIcon, value: 10, max: 100, description: "Energy level and vitality" },
+    { icon: EnergyIcon, value: 15, max: 100, description: "Energy level and vitality" },
     { icon: StressIcon, value: 60, max: 100, description: "Stress level and tension" },
     { icon: PhysicalIcon, value: 80, max: 100, description: "Physical health and fitness" },
   ];
@@ -83,8 +83,8 @@ const Dashboard = () => {
           </div>
           
           <div className="flex gap-3 items-center">
-            <button className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300">
-              <TaskIcon className="w-7 h-7 text-primary-text" />
+            <button className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
+              <TaskIcon className="w-7 h-7 text-foreground" />
             </button>
             <button 
               onClick={() => setChatOpen(true)}
@@ -94,9 +94,9 @@ const Dashboard = () => {
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300"
+              className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
             >
-              <SettingsIcon className="w-9 h-9 text-primary-text" />
+              <SettingsIcon className="w-9 h-9 text-foreground" />
             </button>
           </div>
         </div>
