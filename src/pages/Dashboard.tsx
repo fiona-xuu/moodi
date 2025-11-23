@@ -11,7 +11,7 @@ import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
 import HungerIcon from "@/components/icons/HungerIcon";
 import StressIcon from "@/components/icons/StressIcon";
-import PhysicalIcon from "@/components/icons/PhysicalIcon";
+import { Moon } from "lucide-react";
 import TaskIcon from "@/components/icons/TaskIcon";
 import ChatIcon from "@/components/icons/ChatIcon";
 import SettingsIcon from "@/components/icons/SettingsIcon";
@@ -62,7 +62,7 @@ const Dashboard = () => {
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
     { icon: StressIcon, value: 50, max: 100, description: "Stress level and tension. Lower is better." },
-    { icon: PhysicalIcon, value: 50, max: 100, description: "Physical wellness and fitness" },
+    { icon: Moon, value: 50, max: 100, description: "Physical wellness and fitness" },
   ];
 
   const [rawStats, setRawStats] = useState<{
@@ -113,7 +113,7 @@ const Dashboard = () => {
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
             { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+            { icon: Moon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
         ];
         setStats(newStats);
         } else {
@@ -194,7 +194,7 @@ const Dashboard = () => {
                   { icon: HungerIcon, value: message.data.hunger.score, max: 100, description: "Hunger level and appetite. Higher is more full." },
                   { icon: EnergyIcon, value: message.data.energy_level.score, max: 100, description: "Energy level and vitality" },
                   { icon: StressIcon, value: message.data.stress_level.score, max: 100, description: "Stress level and tension. Lower is better." },
-                  { icon: PhysicalIcon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
+                  { icon: Moon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
               ];
               setStats(newStats);
               setScanSummary(message.data);
@@ -292,7 +292,7 @@ const Dashboard = () => {
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
             { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-            { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+            { icon: Moon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
         ];
         setStats(newStats);
         alert("Stats have been recomputed based on the latest scan.");
@@ -320,7 +320,7 @@ const Dashboard = () => {
           </div>
           
           <div className="flex flex-col gap-3 items-end">
-            <div className="flex gap-3 items-center">
+          <div className="flex gap-3 items-center">
               <button 
                 onClick={() => setTaskModalOpen(true)}
                 className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
@@ -338,7 +338,7 @@ const Dashboard = () => {
                 className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
               >
                 <SettingsIcon className="w-9 h-9 text-foreground" />
-              </button>
+            </button>
             </div>
             <div className="flex gap-3 items-center">
               <button 
@@ -347,7 +347,7 @@ const Dashboard = () => {
               >
                 <PlayButton className="text-white" width={32} height={32} />
                 <span className="inder-text text-lg font-medium">scan</span>
-              </button>
+            </button>
               <button 
                 onClick={handleRefreshStats}
                 className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-5 rounded-full shadow-lg hover:scale-105 transition-all duration-300"
@@ -400,14 +400,16 @@ const Dashboard = () => {
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 const colorClass = getColorClass(stat.value, stat.max);
+                // Check if this is the Moon icon (Physical wellness stat - last one)
+                const isMoonIcon = stat.description === "Physical wellness and fitness";
                 return (
                   <div key={index} className="relative">
                     <div className="flex items-center gap-3 bg-foreground/10 backdrop-blur-sm rounded-full p-2 pr-5">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0 cursor-help`}>
-                            <Icon className="w-5 h-5 text-white" />
-                          </div>
+                            <Icon className={`w-5 h-5 ${isMoonIcon ? 'text-primary-accent' : 'text-white'}`} />
+                      </div>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>{stat.description}</p>
@@ -450,8 +452,8 @@ const Dashboard = () => {
                   stress<br />trend<br />graph
                 </h3>
               </div>
+              </div>
             </div>
-          </div>
           </div>
 
           {/* Right Column - Mood Indicators */}

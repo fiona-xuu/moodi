@@ -7,7 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import mascot from "@/assets/mascots/mascot.png";
+import mascot from "@/assets/mascots/mascot-wave.png";
 import chatbotBackground from "@/assets/chatbot-background.png";
 import TextBubble from "@/components/TextBubble";
 import ChatIcon from "@/components/icons/ChatIcon";
@@ -190,7 +190,7 @@ const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
                   <img 
                     src={mascot} 
                     alt="Moodi" 
-                    className="h-72 w-auto mx-auto"
+                    className="h-72 w-auto mx-auto animate-bounce-gentle"
                   />
                 </div>
               </div>
