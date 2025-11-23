@@ -37,6 +37,7 @@ Always be kind, encouraging, and non-judgmental. Keep your responses concise and
 
 // WebSocket Logic
 let connectedClients = new Set();
+let lastScanTime = 0;
 
 wss.on('connection', (ws) => {
     console.log('Client connected to WebSocket on port 8080');
@@ -47,6 +48,13 @@ wss.on('connection', (ws) => {
             const data = JSON.parse(message);
             
             if (data.type === 'scan') {
+                const now = Date.now();
+                if (now - lastScanTime < 3000) {
+                    console.log('Scan data received too soon. Ignoring.');
+                    return;
+                }
+                lastScanTime = now;
+
                 console.log('Received scan data. Saving and Running AI Analysis...');
                 
                 // Save scan to DB
@@ -165,6 +173,35 @@ async function runAIAnalysis(metrics) {
     } catch (error) {
         console.error('Error generating insight:', error);
     }
+}
+
+// Recompute overall health based on other stats
+async function recomputeOverallHealth() {
+  return new Promise((resolve, reject) => {
+    db.get("SELECT hunger, stress_level, energy_level, sleep_quality FROM stats WHERE id = 1", (err, row) => {
+      if (err) {
+        console.error("Error fetching stats for recomputation:", err);
+        return reject(err);
+      }
+      if (row) {
+        const { hunger, stress_level, energy_level, sleep_quality } = row;
+        // Invert stress_level for the average calculation
+        const invertedStress = 100 - stress_level;
+        const overallHealth = Math.round((hunger + invertedStress + energy_level + sleep_quality) / 4);
+        
+        db.run("UPDATE stats SET overall_health = ? WHERE id = 1", [overallHealth], (updateErr) => {
+          if (updateErr) {
+            console.error("Error updating overall_health:", updateErr);
+            return reject(updateErr);
+          }
+          console.log("Recomputed overall_health:", overallHealth);
+          resolve();
+        });
+      } else {
+        resolve(); // No stats row found, do nothing
+      }
+    });
+  });
 }
 
 // --- API Endpoints ---
@@ -376,23 +413,30 @@ app.post('/api/chat', upload.single('image'), async (req, res) => {
         console.log("Gemini wants to call functions:", functionCalls.map(c => ({ name: c.name, args: c.args })));
 
         // Execute DB updates in parallel and format responses correctly
-        const dbPromises = functionCalls.map(call => {
+        const dbPromises = functionCalls.map(async (call) => {
             if (call.name === 'update_user_stat') {
                 const { stat_name, change_amount } = call.args;
-                return new Promise((resolve, reject) => {
+                await new Promise((resolve, reject) => {
                     db.run(`UPDATE stats SET ${stat_name} = MIN(100, MAX(0, ${stat_name} + ?)), last_updated = CURRENT_TIMESTAMP WHERE id = 1`, 
                         [change_amount], (err) => {
                             if (err) reject(err);
-                            else resolve({
-                                functionResponse: {
-                                    name: "update_user_stat",
-                                    response: { name: "update_user_stat", content: { success: true, message: `Updated ${stat_name} by ${change_amount}` } }
-                                }
-                            });
+                            else resolve();
                         });
                 });
+
+                // After updating a stat, recompute overall health
+                if (stat_name !== 'overall_health') {
+                  await recomputeOverallHealth();
+                }
+                
+                return {
+                    functionResponse: {
+                        name: "update_user_stat",
+                        response: { name: "update_user_stat", content: { success: true, message: `Updated ${stat_name} by ${change_amount}` } }
+                    }
+                };
             }
-            return Promise.resolve(null);
+            return null;
         });
 
         const functionResponses = (await Promise.all(dbPromises)).filter(Boolean);

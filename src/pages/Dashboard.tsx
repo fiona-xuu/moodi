@@ -24,6 +24,7 @@ import DailyCheckInModal from "@/components/DailyCheckInModal";
 import PlayButton from "@/components/PlayButton";
 import RefreshIcon from "@/components/icons/RefreshIcon";
 import { authStorage, authAPI } from "@/lib/api";
+import ScanSummaryModal from "@/components/ScanSummaryModal";
 
 // Define an interface for the stats for type safety
 interface Stat {
@@ -33,15 +34,34 @@ interface Stat {
   description: string;
 }
 
+interface Justification {
+  score: number;
+  justification: string;
+}
+
+interface ScanSummary {
+  overall_health: Justification;
+  hunger: Justification;
+  stress_level: Justification;
+  energy_level: Justification;
+  sleep_quality: Justification;
+}
+
 const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
+<<<<<<< Updated upstream
   const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
   const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false);
   const [dailyCheckInOpen, setDailyCheckInOpen] = useState<boolean>(false);
   const [newTasks, setNewTasks] = useState<Task[]>([]);
   const initialStats = [
+=======
+  const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
+  const [stats, setStats] = useState<Stat[]>([
+>>>>>>> Stashed changes
     { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
@@ -120,6 +140,37 @@ const Dashboard = () => {
 
     loadUser();
     fetchStats();
+
+    const ws = new WebSocket('ws://localhost:8080');
+
+    ws.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'ai_analysis') {
+        console.log('Received AI analysis:', message.data);
+        const newStats: Stat[] = [
+            { icon: HeartIcon, value: message.data.overall_health.score, max: 100, description: "Overall health and wellness" },
+            { icon: HungerIcon, value: message.data.hunger.score, max: 100, description: "Hunger level and appetite. Higher is more full." },
+            { icon: EnergyIcon, value: message.data.energy_level.score, max: 100, description: "Energy level and vitality" },
+            { icon: StressIcon, value: message.data.stress_level.score, max: 100, description: "Stress level and tension. Lower is better." },
+            { icon: PhysicalIcon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
+        ];
+        setStats(newStats);
+        setScanSummary(message.data);
+        setIsSummaryModalOpen(true);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
   const getColorClass = (value: number, max: number): string => {
@@ -282,6 +333,8 @@ const Dashboard = () => {
           username={username}
           onTasksUpdate={setNewTasks}
         />
+        {/* Scan Summary Modal */}
+        <ScanSummaryModal open={isSummaryModalOpen} onOpenChange={setIsSummaryModalOpen} summary={scanSummary} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 -mt-1">
