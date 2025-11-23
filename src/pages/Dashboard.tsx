@@ -13,6 +13,8 @@ import SettingsIcon from "@/components/icons/SettingsIcon";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SettingsModal from "@/components/SettingsModal";
 import ChatModal from "@/components/ChatModal";
+import PlayButton from "@/components/PlayButton";
+import RefreshIcon from "@/components/icons/RefreshIcon";
 import { authStorage, authAPI } from "@/lib/api";
 
 // Define an interface for the stats for type safety
@@ -26,12 +28,13 @@ interface Stat {
 const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
+  const [chatOpen, setChatOpen] = useState<boolean>(false);
   const [stats, setStats] = useState<Stat[]>([
     { icon: PhysicalIcon, value: 50, max: 100, description: "Overall physical health and fitness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
     { icon: StressIcon, value: 50, max: 100, description: "Stress level and tension. Lower is better." },
-    { icon: Heart, value: 50, max: 100, description: "Sleep quality and restfulness" },
+    { icon: HeartIcon, value: 50, max: 100, description: "Sleep quality and restfulness" },
   ]);
 
   useEffect(() => {
@@ -70,7 +73,7 @@ const Dashboard = () => {
                 { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
                 { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
                 { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-                { icon: Heart, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
+                { icon: HeartIcon, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
             ];
             setStats(newStats);
 
@@ -110,7 +113,7 @@ const Dashboard = () => {
             { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
             { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
             { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-            { icon: Heart, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
+            { icon: HeartIcon, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
         ];
         setStats(newStats);
         alert("Stats have been recomputed based on the latest scan.");
@@ -136,22 +139,36 @@ const Dashboard = () => {
             <Rectangle className="-ml-8 text-primary-accent inder-text font-weight-bold text-5xl" username={`${username}'s vitals`} />
           </div>
           
-          <div className="flex gap-3 items-center">
-            <button className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
-              <TaskIcon className="w-7 h-7 text-foreground" />
-            </button>
-            <button 
-              onClick={() => setChatOpen(true)}
-              className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
-            >
-              <ChatIcon className="w-9 h-9 text-primary-text" />
-            </button>
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
-            >
-              <SettingsIcon className="w-9 h-9 text-foreground" />
-            </button>
+          <div className="flex flex-col gap-3 items-end">
+            <div className="flex gap-3 items-center">
+              <button className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
+                <TaskIcon className="w-6 h-6 text-foreground" />
+              </button>
+              <button 
+                onClick={() => setChatOpen(true)}
+                className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
+              >
+                <ChatIcon className="w-8 h-8 text-primary-text" />
+              </button>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
+              >
+                <SettingsIcon className="w-8 h-8 text-foreground" />
+              </button>
+            </div>
+            <div className="flex gap-3 items-center">
+              <button className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-3 rounded-full shadow-lg hover:scale-105 transition-all duration-300">
+                <PlayButton className="text-white" width={32} height={32} />
+                <span className="inder-text text-lg font-medium">scan</span>
+              </button>
+              <button 
+                onClick={handleRefreshStats}
+                className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-5 rounded-full shadow-lg hover:scale-105 transition-all duration-300"
+              >
+                <RefreshIcon className="text-white" width={18} height={16} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -162,19 +179,13 @@ const Dashboard = () => {
         <ChatModal open={chatOpen} onOpenChange={setChatOpen} />
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 mt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 -mt-1">
           {/* Left Column - Stats */}
           <div className="ml-4">
           <div>
-            <div className="flex justify-between items-center ml-4 mb-6">
-              <h2 className="text-4xl font-medium text-foreground inder-text">statistics</h2>
-              <button onClick={handleRefreshStats} className="bg-primary-accent text-primary-text px-4 py-2 rounded-lg hover:scale-105 transition-transform duration-300">
-                Refresh Stats
-              </button>
-            </div>
             
             {/* Stats Bars */}
-            <div className="space-y-4 mb-10">
+            <div className="space-y-4 mb-8">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 const colorClass = getColorClass(stat.value, stat.max);
@@ -230,9 +241,10 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Right Column - Mood Indicators */}
-          <div className="flex flex-col items-center justify-center gap-12">
+          <div className="flex flex-col items-center justify-center gap-8 mt-4">
             {/* Sad Face */}
             <div className="relative">
               <div className="w-64 h-64 rounded-full border-[20px] border-foreground bg-transparent flex items-center justify-center">

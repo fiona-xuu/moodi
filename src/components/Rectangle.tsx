@@ -21,7 +21,7 @@ const Rectangle = ({ className = "", rectangleColor = "currentColor", username }
       <div 
         className="h-[107px] w-[910.175px]"
         style={{
-          background: `linear-gradient(to right, ${colorValue} 0%, ${colorValue} 35%, transparent 100%)`
+          background: `linear-gradient(to right, ${colorValue} 0%, ${colorValue} 30%, transparent 100%)`
         }}
       />
       
