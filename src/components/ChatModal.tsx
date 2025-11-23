@@ -128,7 +128,7 @@ const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
               </button>
               {hasMessages ? (
                 <SheetTitle className="text-4xl font-light text-primary-accent mt-6" style={{ fontFamily: 'Mansalva, cursive' }}>
-                  <span className="text-primary-accent/90">chat with</span> <span className="text-primary-accent font-bold">moodi</span>
+                  <span className="text-primary-accent/90">chat with</span> <span className="text-primary-accent font-bold">lumi</span>
                 </SheetTitle>
               ) : (
                 <div className="flex flex-col items-center mt-6">

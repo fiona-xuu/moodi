@@ -15,6 +15,8 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import SettingsModal from "@/components/SettingsModal";
 import ChatModal from "@/components/ChatModal";
 import ScanModal from "@/components/ScanModal";
+import TaskModal, { Task } from "@/components/TaskModal";
+import DailyCheckInModal from "@/components/DailyCheckInModal";
 import PlayButton from "@/components/PlayButton";
 import RefreshIcon from "@/components/icons/RefreshIcon";
 import { authStorage, authAPI } from "@/lib/api";
@@ -32,6 +34,9 @@ const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
   const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
+  const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false);
+  const [dailyCheckInOpen, setDailyCheckInOpen] = useState<boolean>(false);
+  const [newTasks, setNewTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState<Stat[]>([
     { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
@@ -126,6 +131,7 @@ const Dashboard = () => {
     }
   };
 
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background Image */}
@@ -144,7 +150,10 @@ const Dashboard = () => {
           
           <div className="flex flex-col gap-3 items-end">
             <div className="flex gap-3 items-center">
-              <button className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
+              <button 
+                onClick={() => setTaskModalOpen(true)}
+                className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
+              >
                 <TaskIcon className="w-7 h-7 text-foreground" />
               </button>
               <button 
@@ -184,8 +193,28 @@ const Dashboard = () => {
         {/* Chat Modal */}
         <ChatModal open={chatOpen} onOpenChange={setChatOpen} onStatsUpdate={fetchStats} />
 
-        {/* Scan Instructions Modal */}
-        <ScanModal open={scanModalOpen} onOpenChange={setScanModalOpen} />
+        {/* Task Modal */}
+        <TaskModal 
+          open={taskModalOpen} 
+          onOpenChange={setTaskModalOpen}
+          username={username}
+          onTasksUpdate={(tasks) => {
+            setNewTasks(tasks);
+            setDailyCheckInOpen(true);
+          }}
+        />
+
+            {/* Scan Instructions Modal */}
+            <ScanModal open={scanModalOpen} onOpenChange={setScanModalOpen} />
+
+        {/* Daily Check In Modal */}
+        <DailyCheckInModal 
+          open={dailyCheckInOpen} 
+          onOpenChange={setDailyCheckInOpen} 
+          tasks={newTasks}
+          username={username}
+          onTasksUpdate={setNewTasks}
+        />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 -mt-1">
