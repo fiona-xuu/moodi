@@ -22,25 +22,6 @@ export interface SignupEmailSentResponse {
   email: string;
 }
 
-// Helper function to get the email redirect URL (never localhost)
-function getEmailRedirectUrl(): string {
-  // Use production URL from environment variable if set
-  const productionUrl = import.meta.env.VITE_APP_URL;
-  if (productionUrl) {
-    return `${productionUrl}/dashboard`;
-  }
-  
-  // If no env var, check if we're on localhost
-  const currentOrigin = window.location.origin;
-  if (currentOrigin.includes('localhost') || currentOrigin.includes('127.0.0.1')) {
-    // In development, use production domain instead of localhost
-    return 'https://www.moodi.tech/dashboard';
-  }
-  
-  // If not localhost, use current origin (should be production)
-  return `${currentOrigin}/dashboard`;
-}
-
 // Helper function to convert Supabase errors to user-friendly messages
 function getFriendlyErrorMessage(error: { message?: string; code?: string }, context: 'login' | 'signup'): string {
   const errorMessage = error?.message || '';
@@ -170,8 +151,8 @@ export const authAPI = {
     // Validate first - this will throw if validation fails
     await authAPI.validateSignup(name, email, password);
 
-    // Get the redirect URL for email confirmation (never localhost)
-    const redirectUrl = getEmailRedirectUrl();
+    // Get the redirect URL for email confirmation
+    const redirectUrl = `${window.location.origin}/dashboard`;
 
     // Sign up the user (Supabase will send confirmation email)
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -236,14 +217,11 @@ export const authAPI = {
 
   // Resend confirmation email
   resendConfirmationEmail: async (email: string): Promise<void> => {
-    // Get the redirect URL for email confirmation (never localhost)
-    const redirectUrl = getEmailRedirectUrl();
-    
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: email.trim(),
       options: {
-        emailRedirectTo: redirectUrl,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
 
