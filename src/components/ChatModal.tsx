@@ -186,7 +186,7 @@ const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
                 </div>
 
                 {/* Moodi character */}
-                <div className="mt-24">
+                <div className="mt-32">
                   <img 
                     src={mascot} 
                     alt="Moodi" 
