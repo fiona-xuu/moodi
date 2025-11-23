@@ -48,7 +48,7 @@ interface ScanSummary {
 }
 
 const Dashboard = () => {
-  const [username, setUsername] = useState<string>("guest");
+  const [username, setUsername] = useState<string>("");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
   const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
@@ -127,6 +127,9 @@ const Dashboard = () => {
         if (user?.username) {
           setUsername(user.username);
           authStorage.setUser(user);
+        } else {
+          // No user found, set to guest
+          setUsername("guest");
         }
       } catch (error) {
         // User is not logged in or error occurred
