@@ -150,7 +150,6 @@ const Dashboard = () => {
     
     // Otherwise, find the lowest stat (check in priority order for ties)
     const statsToCheck = [
-      { name: 'overall_health', value: overall_health, image: overall },
       { name: 'hunger', value: hunger, image: hungry },
       { name: 'energy_level', value: energy_level, image: sleepy },
       { name: 'stress_level', value: stress_level, image: stressed },
