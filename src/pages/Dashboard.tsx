@@ -249,7 +249,7 @@ const Dashboard = () => {
                 onClick={handleRefreshStats}
                 className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-5 rounded-full shadow-lg hover:scale-105 transition-all duration-300"
               >
-                <RefreshIcon className="text-white" width={18} height={16} />
+                <RefreshIcon className="text-white" width={20} height={20} />
               </button>
             </div>
           </div>
