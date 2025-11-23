@@ -115,7 +115,7 @@ const DailyCheckInModal = ({ open, onOpenChange, tasks, username, onTasksUpdate 
   }, [tasks, scanState, open]);
 
   // Helper function to determine tasks from scan data
-  const determineTasksFromScan = (scanData: any): Task[] => {
+  const determineTasksFromScan = (scanData: Record<string, unknown>): Task[] => {
     // This is a placeholder - you'll need to implement logic based on your scan data structure
     // For now, return empty array (healthy state) or sample tasks based on scan metrics
     const tasks: Task[] = [];
@@ -172,12 +172,8 @@ const DailyCheckInModal = ({ open, onOpenChange, tasks, username, onTasksUpdate 
                 Ready for today's adventure?
               </p>
               <p className="text-primary-accent text-base">
-                Let's start today's scan to refresh your vitals
+                Let's start today's scan to refresh your vitals and see what's new!
               </p>
-              <p className="text-primary-accent text-base">
-                and see what's new!
-              </p>
-              
               <div className="pt-4">
                 <GradientButton
                   onClick={handleStartScanning}
@@ -190,7 +186,7 @@ const DailyCheckInModal = ({ open, onOpenChange, tasks, username, onTasksUpdate 
                       <span>{getButtonText()}</span>
                     </>
                   ) : (
-                    "start scanning"
+                    "Start scanning"
                   )}
                 </GradientButton>
               </div>
@@ -233,11 +229,6 @@ const DailyCheckInModal = ({ open, onOpenChange, tasks, username, onTasksUpdate 
               )}
             </>
           )}
-
-          {/* User Icon - Bottom Right */}
-          <div className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary-accent/30 flex items-center justify-center shadow-md">
-            <span className="text-primary-accent font-bold text-lg">{firstLetter}</span>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

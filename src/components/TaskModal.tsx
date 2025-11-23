@@ -50,10 +50,9 @@ const TaskModal = ({ open, onOpenChange, username = "guest", onTasksUpdate }: Ta
       icon: <Calendar className="text-primary-accent ml-2" width={32} height={32} />,
       instructions: [
         "Ready for today's adventure?",
-        "Let's start today's scan to refresh your vitals",
-        "and see what's new!"
+        "Let's start today's scan to refresh your vitals and see what's new!"
       ],
-      buttonText: "start scanning",
+      buttonText: "Start scanning",
       timerDuration: undefined, // No timer for daily check in
       aiReason: undefined // No AI reason for daily check in
     },
@@ -70,7 +69,7 @@ const TaskModal = ({ open, onOpenChange, username = "guest", onTasksUpdate }: Ta
         "30-min timer",
         " - Scan yourself after 30 mins to reassess vitals"
       ],
-      buttonText: "take a picture",
+      buttonText: "Take a picture",
       timerDuration: 30 * 60, // 30 minutes in seconds
       aiReason: "Reason for the action: (ai text)"
     },
@@ -83,11 +82,11 @@ const TaskModal = ({ open, onOpenChange, username = "guest", onTasksUpdate }: Ta
       action: "Take a 10-min breathing exercise",
       icon: <Activity className="text-primary-accent ml-2" width={32} height={32} />,
       instructions: [
-        "Find a quiet space and sit comfortably",
-        "10-min timer",
+        "Find a quiet space and sit comfortably for",
+        "10-min",
         " - Scan yourself after 10 mins to reassess vitals"
       ],
-      buttonText: "start exercise",
+      buttonText: "Start exercise",
       timerDuration: 10 * 60, // 10 minutes in seconds
       aiReason: "Reason for the action: (ai text)"
     },
@@ -101,27 +100,27 @@ const TaskModal = ({ open, onOpenChange, username = "guest", onTasksUpdate }: Ta
       icon: <NapIcon className="text-primary-accent ml-2" width={32} height={32} />,
       instructions: [
         "Choose a nutritious snack",
-        "Take a picture of your snack",
+        " - Take a picture of your snack",
         " - Scan yourself after eating to reassess vitals"
       ],
-      buttonText: "take a picture",
+      buttonText: "Take a picture",
       timerDuration: undefined, // No timer for this task
       aiReason: "Reason for the action: (ai text)"
     },
     {
       id: "5",
-      title: "Go for a nature walk",
-      description: "Spending time in nature can help reduce stress, improve mood, and boost overall well-being.",
+      title: "Physical Activity Low - Go for a nature walk",
+      description: "Your physical activity levels are low. Going for a nature walk can help improve your mood and boost your overall well-being.",
       completed: false,
       taskType: "Nature Walk",
-      action: "Go for a 20-min nature walk",
+      action: "Go for a 20-min walk in nature",
       icon: <Trees className="text-primary-accent ml-2" width={32} height={32} />,
       instructions: [
-        "Find a nearby park or nature trail",
-        "20-min timer",
+        "Find a nearby park or nature trail for a",
+        "20-min walk",
         " - Scan yourself after the walk to reassess vitals"
       ],
-      buttonText: "start walk",
+      buttonText: "Start walk",
       timerDuration: 20 * 60, // 20 minutes in seconds
       aiReason: "Reason for the action: (ai text)"
     },
