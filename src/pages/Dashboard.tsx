@@ -51,17 +51,14 @@ const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
-<<<<<<< Updated upstream
   const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
   const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false);
   const [dailyCheckInOpen, setDailyCheckInOpen] = useState<boolean>(false);
   const [newTasks, setNewTasks] = useState<Task[]>([]);
   const initialStats = [
-=======
   const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
   const [stats, setStats] = useState<Stat[]>([
->>>>>>> Stashed changes
     { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
