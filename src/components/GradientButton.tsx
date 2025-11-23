@@ -7,6 +7,7 @@ interface GradientButtonProps {
   onClick?: () => void;
   className?: string;
   type?: "button" | "submit" | "reset";
+  disabled?: boolean;
 }
 
 const GradientButton = ({ 
@@ -14,7 +15,8 @@ const GradientButton = ({
   to, 
   onClick, 
   className = "",
-  type = "button"
+  type = "button",
+  disabled = false
 }: GradientButtonProps) => {
   const baseStyles = "rounded-xl border border-[#39396F] bg-gradient-to-b from-[#855C86] to-[#44447E] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)] text-foreground font-medium transition-all duration-300 hover:scale-105 cursor-pointer text-xl py-2 px-7";
 
@@ -30,6 +32,7 @@ const GradientButton = ({
     <button 
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`${baseStyles} ${className}`}
     >
       {children}

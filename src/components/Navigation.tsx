@@ -1,6 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import GradientButton from "@/components/GradientButton";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import mascot from "@/assets/mascot.png";
 
 const Navigation = () => {
   const location = useLocation();
@@ -46,13 +48,22 @@ const Navigation = () => {
       <div className="relative mx-auto flex items-center text-xl">
         {/* Left section */}
         <div className="flex-1 flex justify-start">
-          <Link to="/" className="text-foreground font-medium hover:opacity-80 transition-opacity">
-            icon
-          </Link>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="hover:scale-110 transition-all duration-300 cursor-pointer -ml-2">
+                  <img src={mascot} alt="moodi mascot" className="h-12 w-auto" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>hi, i'm lumi!</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         
         {/* Center section - absolutely positioned */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-8 items-center">
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex gap-8 items-center inder-text">
           {location.pathname === '/' ? (
             <a 
               href="#home" 
@@ -82,7 +93,7 @@ const Navigation = () => {
         </div>
         
         {/* Right section */}
-        <div className="flex-1 flex justify-end">
+        <div className="flex-1 flex justify-end inder-text">
           <GradientButton to="/login">
             log in
           </GradientButton>

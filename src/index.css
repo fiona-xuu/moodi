@@ -49,8 +49,10 @@ All colors MUST be HSL.
     
     /* Primary accent color */
     --primary-accent: 229 32% 33%;
-    
+
     --primary-text: 49 85% 92%;
+
+    --primary-background: 50 100% 94%;
 
     --sidebar-background: 0 0% 98%;
 
