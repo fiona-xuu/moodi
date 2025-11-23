@@ -38,6 +38,29 @@ const Dashboard = () => {
     { icon: PhysicalIcon, value: 50, max: 100, description: "Physical wellness and fitness" },
   ]);
 
+  const fetchStats = async () => {
+    try {
+        const response = await fetch('http://localhost:3000/api/stats');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        
+            // Map backend data to frontend stats structure
+            const newStats: Stat[] = [
+                { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
+                { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
+                { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
+                { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
+                { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
+            ];
+        setStats(newStats);
+
+    } catch (error) {
+        console.error("Failed to fetch stats:", error);
+    }
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -58,29 +81,6 @@ const Dashboard = () => {
         // User is not logged in or error occurred
         setUsername("guest");
       }
-    };
-
-    const fetchStats = async () => {
-        try {
-            const response = await fetch('http://localhost:3000/api/stats');
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            const data = await response.json();
-            
-                // Map backend data to frontend stats structure
-                const newStats: Stat[] = [
-                    { icon: HeartIcon, value: data.overall_health, max: 100, description: "Overall health and wellness" },
-                    { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
-                    { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
-                    { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
-                    { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
-                ];
-            setStats(newStats);
-
-        } catch (error) {
-            console.error("Failed to fetch stats:", error);
-        }
     };
 
     loadUser();
@@ -177,7 +177,7 @@ const Dashboard = () => {
         <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
         
         {/* Chat Modal */}
-        <ChatModal open={chatOpen} onOpenChange={setChatOpen} />
+        <ChatModal open={chatOpen} onOpenChange={setChatOpen} onStatsUpdate={fetchStats} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 -mt-1">

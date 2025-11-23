@@ -323,3 +323,38 @@ export const authStorage = {
   },
 };
 
+// Chat API functions
+export interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+}
+
+const API_BASE_URL = 'http://localhost:3000/api';
+
+export const sendChatMessage = async (message: string, history: { role: 'user' | 'model'; parts: { text: string }[] }[] = [], image?: File) => {
+  try {
+    const formData = new FormData();
+    formData.append('message', message);
+    formData.append('history', JSON.stringify(history));
+    if (image) {
+      formData.append('image', image);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/chat`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to send message');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in sendChatMessage:', error);
+    throw error;
+  }
+};
+
