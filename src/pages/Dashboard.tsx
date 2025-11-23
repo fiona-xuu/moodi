@@ -137,35 +137,54 @@ const Dashboard = () => {
     loadUser();
     fetchStats();
 
-    const ws = new WebSocket('ws://localhost:8080');
+    // Only connect to WebSocket if we're in development or if the backend is available
+    let ws: WebSocket | null = null;
+    try {
+      // Check if we're in a browser environment and WebSocket is available
+      if (typeof WebSocket !== 'undefined') {
+        ws = new WebSocket('ws://localhost:8080');
 
-    ws.onopen = () => {
-      console.log('WebSocket connection established');
-    };
+        ws.onopen = () => {
+          console.log('WebSocket connection established');
+        };
 
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'ai_analysis') {
-        console.log('Received AI analysis:', message.data);
-        const newStats: Stat[] = [
-            { icon: HeartIcon, value: message.data.overall_health.score, max: 100, description: "Overall health and wellness" },
-            { icon: HungerIcon, value: message.data.hunger.score, max: 100, description: "Hunger level and appetite. Higher is more full." },
-            { icon: EnergyIcon, value: message.data.energy_level.score, max: 100, description: "Energy level and vitality" },
-            { icon: StressIcon, value: message.data.stress_level.score, max: 100, description: "Stress level and tension. Lower is better." },
-            { icon: PhysicalIcon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
-        ];
-        setStats(newStats);
-        setScanSummary(message.data);
-        setIsSummaryModalOpen(true);
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'ai_analysis') {
+              console.log('Received AI analysis:', message.data);
+              const newStats: Stat[] = [
+                  { icon: HeartIcon, value: message.data.overall_health.score, max: 100, description: "Overall health and wellness" },
+                  { icon: HungerIcon, value: message.data.hunger.score, max: 100, description: "Hunger level and appetite. Higher is more full." },
+                  { icon: EnergyIcon, value: message.data.energy_level.score, max: 100, description: "Energy level and vitality" },
+                  { icon: StressIcon, value: message.data.stress_level.score, max: 100, description: "Stress level and tension. Lower is better." },
+                  { icon: PhysicalIcon, value: message.data.sleep_quality.score, max: 100, description: "Physical wellness and fitness" },
+              ];
+              setStats(newStats);
+              setScanSummary(message.data);
+              setIsSummaryModalOpen(true);
+            }
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.warn('WebSocket connection error (this is normal if backend is not running):', error);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket connection closed');
+        };
       }
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
+    } catch (error) {
+      console.warn('WebSocket connection failed (this is normal if backend is not running):', error);
+    }
 
     return () => {
-      ws.close();
+      if (ws) {
+        ws.close();
+      }
     };
   }, []);
 
