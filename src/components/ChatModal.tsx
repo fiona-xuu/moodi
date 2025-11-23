@@ -7,7 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
-import mascot from "@/assets/mascot.png";
+import mascot from "@/assets/mascots/mascot.png";
 import chatbotBackground from "@/assets/chatbot-background.png";
 import TextBubble from "@/components/TextBubble";
 import ChatIcon from "@/components/icons/ChatIcon";
@@ -133,7 +133,7 @@ const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
               ) : (
                 <div className="flex flex-col items-center mt-6">
                   <SheetTitle className="text-5xl font-light text-primary-accent" style={{ fontFamily: 'Mansalva, cursive' }}>
-                    meet <span className="text-primary-accent font-bold text-6xl">moodi</span> !
+                    meet <span className="text-primary-accent font-bold text-6xl">lumi</span> !
                   </SheetTitle>
                   <p className="text-primary-accent text-2xl inder-text mt-2">moodi's personal assistant</p>
                 </div>
@@ -145,7 +145,7 @@ const ChatModal = ({ open, onOpenChange, onStatsUpdate }: ChatModalProps) => {
           <div className="flex-1 flex flex-col px-6 pb-24 relative overflow-y-auto">
             {hasMessages ? (
               /* Chat Messages */
-              <div className="flex flex-col gap-0 mt-4">
+              <div className="flex flex-col gap-3 mt-4">
                 {messages.map((message, index) => (
                   <div
                     key={index}

@@ -9,7 +9,11 @@ interface Star {
   duration: number;
 }
 
-const Stars = () => {
+interface StarsProps {
+  duration?: number;
+}
+
+const Stars = ({ duration = 1.5 }: StarsProps) => {
   const [stars, setStars] = useState<Star[]>([]);
 
   useEffect(() => {
@@ -18,7 +22,6 @@ const Stars = () => {
       const topHalfStars = Math.floor(numberOfStars * (2 / 3)); // 2/3 for top half
       const bottomHalfStars = numberOfStars - topHalfStars; // 1/3 for bottom half
       const newStars: Star[] = [];
-      const duration = 1.5;
 
       // Generate stars for top half (0-50% of screen height)
       for (let i = 0; i < topHalfStars; i++) {
@@ -48,7 +51,7 @@ const Stars = () => {
     };
 
     generateStars();
-  }, []);
+  }, [duration]);
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">

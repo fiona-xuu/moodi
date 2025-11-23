@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
-import mascot from "@/assets/mascot.png";
+import mascot from "@/assets/mascots/mascot.png";
 import Rectangle from "@/components/Rectangle";
 import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
@@ -14,6 +14,7 @@ import SettingsIcon from "@/components/icons/SettingsIcon";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SettingsModal from "@/components/SettingsModal";
 import ChatModal from "@/components/ChatModal";
+import ScanModal from "@/components/ScanModal";
 import PlayButton from "@/components/PlayButton";
 import RefreshIcon from "@/components/icons/RefreshIcon";
 import { authStorage, authAPI } from "@/lib/api";
@@ -30,6 +31,7 @@ const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [chatOpen, setChatOpen] = useState<boolean>(false);
+  const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
   const [stats, setStats] = useState<Stat[]>([
     { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
@@ -159,7 +161,10 @@ const Dashboard = () => {
               </button>
             </div>
             <div className="flex gap-3 items-center">
-              <button className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-3 rounded-full shadow-lg hover:scale-105 transition-all duration-300">
+              <button 
+                onClick={() => setScanModalOpen(true)}
+                className="flex items-center gap-3 bg-foreground/10 text-white px-5 py-3 rounded-full shadow-lg hover:scale-105 transition-all duration-300"
+              >
                 <PlayButton className="text-white" width={32} height={32} />
                 <span className="inder-text text-lg font-medium">scan</span>
               </button>
@@ -178,6 +183,9 @@ const Dashboard = () => {
         
         {/* Chat Modal */}
         <ChatModal open={chatOpen} onOpenChange={setChatOpen} onStatsUpdate={fetchStats} />
+
+        {/* Scan Instructions Modal */}
+        <ScanModal open={scanModalOpen} onOpenChange={setScanModalOpen} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 -mt-1">

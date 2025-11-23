@@ -7,6 +7,7 @@ import { authAPI, authStorage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import loginSignupBackground from "@/assets/login-signup-background.png";
 import GradientButton from "@/components/GradientButton";
+import Stars from "@/components/Stars";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -53,6 +54,9 @@ const Signup = () => {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${loginSignupBackground})` }}
       />
+      
+      {/* Stars */}
+      <Stars duration={2}/>
       
       <div className="w-full max-w-md relative z-10">
         <Link to="/" className="inline-flex items-center gap-2 text-foreground/80 hover:text-foreground mb-8 transition-colors text-lg">
