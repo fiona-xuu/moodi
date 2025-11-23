@@ -143,7 +143,7 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!bg-primary-background/90 border-none rounded-lg p-8 max-w-lg [&>button.absolute.right-4.top-4]:hidden">
+      <DialogContent className="!bg-primary-background/95 border-none rounded-lg p-8 max-w-lg [&>button.absolute.right-4.top-4]:hidden">
         <DialogClose className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-0 disabled:pointer-events-none z-50">
           <X className="h-5 w-5 text-primary-accent" />
           <span className="sr-only">Close</span>
