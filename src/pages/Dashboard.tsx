@@ -12,11 +12,13 @@ import ChatIcon from "@/components/icons/ChatIcon";
 import SettingsIcon from "@/components/icons/SettingsIcon";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import SettingsModal from "@/components/SettingsModal";
+import ChatModal from "@/components/ChatModal";
 import { authStorage, authAPI } from "@/lib/api";
 
 const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
+  const [chatOpen, setChatOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -84,8 +86,11 @@ const Dashboard = () => {
             <button className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
               <TaskIcon className="w-7 h-7 text-foreground" />
             </button>
-            <button className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300">
-              <ChatIcon className="w-9 h-9 text-foreground" />
+            <button 
+              onClick={() => setChatOpen(true)}
+              className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300"
+            >
+              <ChatIcon className="w-9 h-9 text-primary-text" />
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
@@ -98,6 +103,9 @@ const Dashboard = () => {
 
         {/* Settings Modal */}
         <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+        
+        {/* Chat Modal */}
+        <ChatModal open={chatOpen} onOpenChange={setChatOpen} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

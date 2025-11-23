@@ -52,7 +52,7 @@ const Navigation = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="hover:scale-110 transition-all duration-300 cursor-pointer -ml-2">
-                  <img src={mascot} alt="moodi mascot" className="h-12 w-auto" />
+                  <img src={mascot} alt="moodi mascot" className="h-11 w-auto" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
