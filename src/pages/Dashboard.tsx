@@ -90,7 +90,7 @@ const Dashboard = () => {
               onClick={() => setChatOpen(true)}
               className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center hover:scale-110 transition-all duration-300"
             >
-              <ChatIcon className="w-9 h-9 text-foreground" />
+              <ChatIcon className="w-9 h-9 text-primary-text" />
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
@@ -108,13 +108,12 @@ const Dashboard = () => {
         <ChatModal open={chatOpen} onOpenChange={setChatOpen} />
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 mt-10">
           {/* Left Column - Stats */}
-          <div>
-            <h2 className="text-4xl font-medium text-foreground inder-text ml-4 mb-6">statistics</h2>
+          <div className="ml-4">
             
             {/* Stats Bars */}
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-10">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 const colorClass = getColorClass(stat.value, stat.max);
