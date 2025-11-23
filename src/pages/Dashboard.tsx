@@ -55,10 +55,9 @@ const Dashboard = () => {
   const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false);
   const [dailyCheckInOpen, setDailyCheckInOpen] = useState<boolean>(false);
   const [newTasks, setNewTasks] = useState<Task[]>([]);
-  const initialStats = [
   const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
-  const [stats, setStats] = useState<Stat[]>([
+  const initialStats: Stat[] = [
     { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
     { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
     { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
