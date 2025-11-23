@@ -82,11 +82,21 @@ const Dashboard = () => {
 
   const fetchStats = async () => {
     try {
-        const response = await fetch('http://localhost:3000/api/stats');
-        if (!response.ok) {
+        // Only fetch stats if we're in development (localhost backend)
+        // In production, use default stats
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+          
+          const response = await fetch('http://localhost:3000/api/stats', {
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
             throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
+          }
+          const data = await response.json();
         
         // Store raw stats for mascot selection
         setRawStats({
@@ -106,24 +116,35 @@ const Dashboard = () => {
             { icon: PhysicalIcon, value: data.sleep_quality, max: 100, description: "Physical wellness and fitness" },
         ];
         setStats(newStats);
-
+        } else {
+          // In production, keep default stats
+          console.log("Using default stats (production mode)");
+        }
     } catch (error) {
-        console.error("Failed to fetch stats:", error);
+        // Silently fail - use default stats
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.warn("Failed to fetch stats (using defaults):", error);
+        }
     }
   };
 
   useEffect(() => {
     const loadUser = async () => {
       try {
-        // First check if user is stored locally
+        // First check if user is stored locally (fast, synchronous)
         const storedUser = authStorage.getUser();
         if (storedUser?.username) {
           setUsername(storedUser.username);
           return;
         }
 
-        // If not stored, try to get profile from API
-        const user = await authAPI.getProfile();
+        // If not stored, try to get profile from API with timeout
+        const profilePromise = authAPI.getProfile();
+        const timeoutPromise = new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 3000)
+        );
+        
+        const user = await Promise.race([profilePromise, timeoutPromise]);
         if (user?.username) {
           setUsername(user.username);
           authStorage.setUser(user);
@@ -132,22 +153,34 @@ const Dashboard = () => {
           setUsername("guest");
         }
       } catch (error) {
-        // User is not logged in or error occurred
+        // User is not logged in or error occurred - set to guest immediately
         setUsername("guest");
       }
     };
 
+    // Load user and stats in parallel (non-blocking)
     loadUser();
     fetchStats();
 
-    // Only connect to WebSocket if we're in development or if the backend is available
+    // Only connect to WebSocket if we're in development (localhost)
     let ws: WebSocket | null = null;
     try {
       // Check if we're in a browser environment and WebSocket is available
-      if (typeof WebSocket !== 'undefined') {
+      // Only connect in development
+      if (typeof WebSocket !== 'undefined' && 
+          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         ws = new WebSocket('ws://localhost:8080');
+        
+        // Set a connection timeout
+        const connectionTimeout = setTimeout(() => {
+          if (ws && ws.readyState === WebSocket.CONNECTING) {
+            ws.close();
+            console.warn('WebSocket connection timeout');
+          }
+        }, 2000); // 2 second timeout
 
         ws.onopen = () => {
+          clearTimeout(connectionTimeout);
           console.log('WebSocket connection established');
         };
 
@@ -173,10 +206,12 @@ const Dashboard = () => {
         };
 
         ws.onerror = (error) => {
+          clearTimeout(connectionTimeout);
           console.warn('WebSocket connection error (this is normal if backend is not running):', error);
         };
 
         ws.onclose = () => {
+          clearTimeout(connectionTimeout);
           console.log('WebSocket connection closed');
         };
       }
