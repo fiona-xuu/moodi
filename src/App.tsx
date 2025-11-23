@@ -26,6 +26,33 @@ const DashboardWithConfirmation = () => {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const accessToken = hashParams.get('access_token');
       const type = hashParams.get('type');
+      const error = hashParams.get('error');
+      const errorDescription = hashParams.get('error_description');
+
+      // Handle errors from Supabase (e.g., expired OTP)
+      if (error) {
+        let errorMessage = 'Email verification failed.';
+        if (error === 'access_denied' && errorDescription) {
+          if (errorDescription.includes('expired')) {
+            errorMessage = 'The email verification link has expired. Please request a new confirmation email.';
+          } else if (errorDescription.includes('invalid')) {
+            errorMessage = 'The email verification link is invalid. Please request a new confirmation email.';
+          } else {
+            errorMessage = decodeURIComponent(errorDescription.replace(/\+/g, ' '));
+          }
+        }
+        
+        toast({
+          title: "Verification failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        
+        // Clear the hash and redirect to signup
+        window.history.replaceState(null, '', '/signup');
+        navigate("/signup");
+        return;
+      }
 
       if (accessToken && type === 'signup') {
         try {
