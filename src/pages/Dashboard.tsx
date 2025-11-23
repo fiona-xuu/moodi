@@ -11,14 +11,16 @@ import HeartIcon from "@/components/icons/HeartIcon";
 import EnergyIcon from "@/components/icons/EnergyIcon";
 import HungerIcon from "@/components/icons/HungerIcon";
 import StressIcon from "@/components/icons/StressIcon";
-import { Moon } from "lucide-react";
+import { Moon, X } from "lucide-react";
 import TaskIcon from "@/components/icons/TaskIcon";
 import ChatIcon from "@/components/icons/ChatIcon";
 import SettingsIcon from "@/components/icons/SettingsIcon";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import SettingsModal from "@/components/SettingsModal";
 import ChatModal from "@/components/ChatModal";
 import ScanModal from "@/components/ScanModal";
+import GradientButton from "@/components/GradientButton";
 import TaskModal, { Task } from "@/components/TaskModal";
 import DailyCheckInModal from "@/components/DailyCheckInModal";
 import PlayButton from "@/components/PlayButton";
@@ -181,13 +183,14 @@ const Dashboard = () => {
   const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
   const [taskModalOpen, setTaskModalOpen] = useState<boolean>(false);
   const [dailyCheckInOpen, setDailyCheckInOpen] = useState<boolean>(false);
+  const [promptScanModalOpen, setPromptScanModalOpen] = useState<boolean>(false);
   const [newTasks, setNewTasks] = useState<Task[]>([]);
   const initialStats: Stat[] = [
-    { icon: HeartIcon, value: 50, max: 100, description: "Overall health and wellness" },
-    { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
-    { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
-    { icon: StressIcon, value: 50, max: 100, description: "Stress balance and calmness. Higher is calmer." },
-    { icon: Moon, value: 50, max: 100, description: "Sleep quality and restfulness." },
+    { icon: HeartIcon, value: 0, max: 100, description: "Overall health and wellness" },
+    { icon: HungerIcon, value: 0, max: 100, description: "Hunger level and appetite. Higher is more full." },
+    { icon: EnergyIcon, value: 0, max: 100, description: "Energy level and vitality" },
+    { icon: StressIcon, value: 0, max: 100, description: "Stress balance and calmness. Higher is calmer." },
+    { icon: Moon, value: 0, max: 100, description: "Sleep quality and restfulness." },
   ];
   const [scanSummary, setScanSummary] = useState<ScanSummary | null>(null);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
@@ -400,6 +403,7 @@ const Dashboard = () => {
     // Load user and stats in parallel (non-blocking)
     loadUser();
     fetchStats();
+    fetchScanVitals();
 
     connectWebSocket();
 
@@ -415,6 +419,34 @@ const Dashboard = () => {
       }
     };
   }, [connectWebSocket]);
+
+  // Check if user is logged in and has no scan data or is showing initial stats, then prompt to scan
+  useEffect(() => {
+    // Only check if user is logged in (not guest)
+    if (username || username === "guest") {
+      // Check if stats are still at initial hardcoded values (all 100)
+      const isInitialStats = stats.every(stat => stat.value === 0 && stat.max === 0);
+
+      // Check if there's no scan data
+      const hasScanData = scanVitals && (
+        (scanVitals.pulse && scanVitals.pulse.length > 0) ||
+        (scanVitals.breathing && scanVitals.breathing.length > 0) ||
+        (scanVitals.ie_ratio && scanVitals.ie_ratio.length > 0) ||
+        (scanVitals.breath_amp && scanVitals.breath_amp.length > 0) ||
+        (scanVitals.blood_pressure && scanVitals.blood_pressure.length > 0) ||
+        (scanVitals.apnea && scanVitals.apnea.length > 0)
+      );
+
+      // If no scan data OR stats are still at initial values, show prompt modal after a short delay
+      if (!hasScanData || isInitialStats) {
+        // Wait a bit for the page to load, then show the prompt
+        const timer = setTimeout(() => {
+          setPromptScanModalOpen(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [username, scanVitals, stats]);
 
   const getColorClass = (value: number, max: number): string => {
     const percentage = (value / max) * 100;
@@ -569,6 +601,53 @@ const Dashboard = () => {
 
             {/* Scan Instructions Modal */}
             <ScanModal open={scanModalOpen} onOpenChange={setScanModalOpen} />
+
+        {/* Prompt to Scan Modal */}
+        <Dialog open={promptScanModalOpen} onOpenChange={setPromptScanModalOpen}>
+          <style>{`
+            [data-radix-dialog-overlay],
+            [data-radix-dialog-overlay][data-state="open"],
+            .fixed.inset-0.z-50.bg-black {
+              background-color: rgba(0, 0, 0, 0.5) !important;
+              opacity: 1 !important;
+              display: block !important;
+              visibility: visible !important;
+            }
+          `}</style>
+          <DialogContent className="!bg-primary-background border-none rounded-lg p-8 max-w-lg [&>button.absolute.right-4.top-4]:hidden z-50">
+            <DialogClose className="absolute right-6 top-6 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-0 disabled:pointer-events-none z-50">
+              <X className="h-5 w-5 text-primary-accent" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-4xl font-bold text-primary-accent inder-text mb-3">
+                Welcome to moodi !
+              </DialogTitle>
+              <div className="h-px bg-primary-accent/40 w-full"></div>
+            </DialogHeader>
+
+            <div className="space-y-4 inder-text mb-4">
+              <p className="text-primary-accent text-lg">
+                Get started by completing your first scan to see your vitals and personalized insights.
+              </p>
+              <p className="text-primary-accent/80 text-base">
+                Your scan will help us understand your current wellness state and provide you with tailored recommendations.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <GradientButton
+                onClick={() => {
+                  setPromptScanModalOpen(false);
+                  setScanModalOpen(true);
+                }}
+                className="w-full inder-text text-lg font-bold py-3 rounded-lg shadow-md hover:scale-105 transition-all duration-300"
+              >
+                Start Your First Scan
+              </GradientButton>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Daily Check In Modal */}
         <DailyCheckInModal 
