@@ -15,10 +15,24 @@ import SettingsModal from "@/components/SettingsModal";
 import ChatModal from "@/components/ChatModal";
 import { authStorage, authAPI } from "@/lib/api";
 
+// Define an interface for the stats for type safety
+interface Stat {
+  icon: React.ElementType;
+  value: number;
+  max: number;
+  description: string;
+}
+
 const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
-  const [chatOpen, setChatOpen] = useState<boolean>(false);
+  const [stats, setStats] = useState<Stat[]>([
+    { icon: PhysicalIcon, value: 50, max: 100, description: "Overall physical health and fitness" },
+    { icon: HungerIcon, value: 50, max: 100, description: "Hunger level and appetite. Higher is more full." },
+    { icon: EnergyIcon, value: 50, max: 100, description: "Energy level and vitality" },
+    { icon: StressIcon, value: 50, max: 100, description: "Stress level and tension. Lower is better." },
+    { icon: Heart, value: 50, max: 100, description: "Sleep quality and restfulness" },
+  ]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -42,7 +56,31 @@ const Dashboard = () => {
       }
     };
 
+    const fetchStats = async () => {
+        try {
+            const response = await fetch('http://localhost:3000/api/stats');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            
+            // Map backend data to frontend stats structure
+            const newStats: Stat[] = [
+                { icon: PhysicalIcon, value: data.overall_health, max: 100, description: "Overall physical health and fitness" },
+                { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
+                { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
+                { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
+                { icon: Heart, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
+            ];
+            setStats(newStats);
+
+        } catch (error) {
+            console.error("Failed to fetch stats:", error);
+        }
+    };
+
     loadUser();
+    fetchStats();
   }, []);
 
   const getColorClass = (value: number, max: number): string => {
@@ -58,13 +96,29 @@ const Dashboard = () => {
     }
   };
 
-  const stats = [
-    { icon: HeartIcon, value: 47, max: 100, description: "Emotional well-being and mood" },
-    { icon: HungerIcon, value: 100, max: 100, description: "Hunger level and appetite" },
-    { icon: EnergyIcon, value: 15, max: 100, description: "Energy level and vitality" },
-    { icon: StressIcon, value: 60, max: 100, description: "Stress level and tension" },
-    { icon: PhysicalIcon, value: 80, max: 100, description: "Physical health and fitness" },
-  ];
+  const handleRefreshStats = async () => {
+    try {
+        console.log("Recomputing stats from the latest scan...");
+        const response = await fetch('http://localhost:3000/api/stats/recompute', { method: 'POST' });
+        if (!response.ok) {
+            throw new Error('Failed to recompute stats');
+        }
+        // After recomputing, fetch the latest stats to update the UI
+        const data = await response.json();
+        const newStats: Stat[] = [
+            { icon: PhysicalIcon, value: data.overall_health, max: 100, description: "Overall physical health and fitness" },
+            { icon: HungerIcon, value: data.hunger, max: 100, description: "Hunger level and appetite. Higher is more full." },
+            { icon: EnergyIcon, value: data.energy_level, max: 100, description: "Energy level and vitality" },
+            { icon: StressIcon, value: data.stress_level, max: 100, description: "Stress level and tension. Lower is better." },
+            { icon: Heart, value: data.sleep_quality, max: 100, description: "Sleep quality and restfulness" },
+        ];
+        setStats(newStats);
+        alert("Stats have been recomputed based on the latest scan.");
+    } catch (error) {
+        console.error("Failed to recompute stats:", error);
+        alert("Could not recompute stats. Make sure a scan has been performed.");
+    }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -111,6 +165,13 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-8 mt-10">
           {/* Left Column - Stats */}
           <div className="ml-4">
+          <div>
+            <div className="flex justify-between items-center ml-4 mb-6">
+              <h2 className="text-4xl font-medium text-foreground inder-text">statistics</h2>
+              <button onClick={handleRefreshStats} className="bg-primary-accent text-primary-text px-4 py-2 rounded-lg hover:scale-105 transition-transform duration-300">
+                Refresh Stats
+              </button>
+            </div>
             
             {/* Stats Bars */}
             <div className="space-y-4 mb-10">
