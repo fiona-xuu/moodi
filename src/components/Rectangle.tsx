@@ -5,10 +5,10 @@ interface RectangleProps {
 }
 
 const Rectangle = ({ className = "", rectangleColor = "currentColor", username }: RectangleProps) => {
-  // Get the actual color value - use CSS variable for primary-accent if currentColor
+  // Get the actual color value - use same color as statistics rounded rectangles (bg-foreground/10)
   const getColorValue = () => {
     if (rectangleColor === "currentColor") {
-      return "hsl(var(--primary-accent))";
+      return "hsl(var(--foreground) / 0.2)";
     }
     return rectangleColor;
   };
