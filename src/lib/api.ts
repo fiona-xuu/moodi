@@ -230,6 +230,56 @@ export const authAPI = {
     }
   },
 
+  // Update user profile
+  updateProfile: async (username: string, email?: string, phoneNumber?: string): Promise<User> => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error('Please log in to update your profile.');
+    }
+
+    // Update email if provided and different from current
+    if (email && email.trim() !== user.email) {
+      const { error: emailError } = await supabase.auth.updateUser({
+        email: email.trim(),
+      });
+
+      if (emailError) {
+        throw new Error('Unable to update email. Please check the email address and try again.');
+      }
+      // Note: Supabase will send a confirmation email for email changes
+    }
+
+    // Update username in profiles table
+    const updateData: { username: string; phone_number?: string } = { username: username.trim() };
+    if (phoneNumber !== undefined) {
+      updateData.phone_number = phoneNumber.trim() || null;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .update(updateData)
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (profileError) {
+      throw new Error('Unable to update your profile. Please try again.');
+    }
+
+    // Get updated user email
+    const { data: { user: updatedAuthUser } } = await supabase.auth.getUser();
+
+    const updatedUser: User = {
+      id: profile.id,
+      username: profile.username,
+      email: updatedAuthUser?.email || email || user.email || '',
+    };
+
+    authStorage.setUser(updatedUser);
+    return updatedUser;
+  },
+
   // Logout user
   logout: async (): Promise<void> => {
     const { error } = await supabase.auth.signOut();

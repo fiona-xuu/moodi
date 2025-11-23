@@ -1,9 +1,8 @@
-import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import dashboardBackground from "@/assets/dashboard-background.png";
-import Arrow from "@/components/Arrow";
+import Rectangle from "@/components/Rectangle";
 import EnergyIcon from "@/components/icons/EnergyIcon";
 import HungerIcon from "@/components/icons/HungerIcon";
 import StressIcon from "@/components/icons/StressIcon";
@@ -12,10 +11,12 @@ import TaskIcon from "@/components/icons/TaskIcon";
 import ChatIcon from "@/components/icons/ChatIcon";
 import SettingsIcon from "@/components/icons/SettingsIcon";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import SettingsModal from "@/components/SettingsModal";
 import { authStorage, authAPI } from "@/lib/api";
 
 const Dashboard = () => {
   const [username, setUsername] = useState<string>("guest");
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -76,7 +77,7 @@ const Dashboard = () => {
         {/* Top Bar */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <Arrow className="-ml-8 text-primary-accent inder-text font-weight-bold text-5xl" username={`${username}'s vitals`} />
+            <Rectangle className="-ml-8 text-primary-accent inder-text font-weight-bold text-5xl" username={`${username}'s vitals`} />
           </div>
           
           <div className="flex gap-3 items-center">
@@ -86,13 +87,17 @@ const Dashboard = () => {
             <button className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300">
               <ChatIcon className="w-9 h-9 text-primary-text" />
             </button>
-            <Link to="/settings">
-              <button className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300">
-                <SettingsIcon className="w-9 h-9 text-primary-text" />
-              </button>
-            </Link>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="w-16 h-16 rounded-full bg-primary-accent/75 flex items-center justify-center hover:scale-110 transition-all duration-300"
+            >
+              <SettingsIcon className="w-9 h-9 text-primary-text" />
+            </button>
           </div>
         </div>
+
+        {/* Settings Modal */}
+        <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
